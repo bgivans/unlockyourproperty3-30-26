@@ -3,7 +3,7 @@ import { scrollToSection } from "@/lib/scroll";
 import { ANCHOR_PROPERTY_OPTIONS, ANCHOR_STRATEGY_CALL } from "@/constants";
 
 const HeroSection = () => (
-  <section className="relative overflow-hidden bg-black">
+  <section className="relative overflow-hidden bg-black min-h-[100dvh] flex flex-col justify-center md:min-h-0 md:block">
     {/* Video background */}
     <video
       autoPlay

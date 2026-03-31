@@ -438,7 +438,7 @@ const RealEstateMoves = () => {
       {/* ============================================================ */}
       <section
         id="top"
-        className="relative overflow-hidden bg-[hsl(var(--hero-navy))]"
+        className="relative overflow-hidden bg-[hsl(var(--hero-navy))] min-h-[100dvh] flex flex-col justify-center md:min-h-0 md:block"
       >
         {/* VIDEO PLACEHOLDER — replace src when hero video is ready */}
         <video
