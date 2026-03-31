@@ -1,0 +1,368 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+
+    /* Trust-first light palette */
+    --background: 40 10% 96%;
+    --foreground: 0 0% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+
+    --primary: 210 76% 23%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 93%;
+    --secondary-foreground: 0 0% 13%;
+
+    --muted: 40 10% 93%;
+    --muted-foreground: 0 0% 38%;
+
+    --accent: 352 73% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --accent-soft: 29 88% 67%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 210 76% 23%;
+
+    --radius: 0.5rem;
+
+    --hero-navy: 210 76% 23%;
+    --hero-teal: 210 50% 30%;
+    --hero-cream: 40 30% 92%;
+    --hero-gradient: linear-gradient(145deg, hsl(210 76% 23%), hsl(210 50% 28%), hsl(200 45% 32%));
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 13%;
+    --sidebar-primary: 210 76% 23%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 93%;
+    --sidebar-accent-foreground: 0 0% 13%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 210 76% 23%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+
+  /* Offset anchored sections below sticky header */
+  [id="strategy-call"],
+  [id="property-options"],
+  [id="property-review"],
+  [id="inherited-probate"],
+  [id="traditional-sale"],
+  [id="adu-feasibility"],
+  [id="code-violations"],
+  [id="adu-guide"],
+  [id="faqs"],
+  [id="buying"],
+  [id="investors"] {
+    scroll-margin-top: 80px;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+}
+
+/* ================================================================== */
+/*  HERO ANIMATIONS                                                    */
+/* ================================================================== */
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes svg-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+@keyframes svg-float-reverse {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(6px); }
+}
+
+.animate-hero-fade-up {
+  animation: hero-fade-up 0.4s ease-out both;
+}
+.animate-hero-fade-up-delay-1 {
+  animation: hero-fade-up 0.4s ease-out 0.06s both;
+}
+.animate-hero-fade-up-delay-2 {
+  animation: hero-fade-up 0.4s ease-out 0.12s both;
+}
+.animate-hero-fade-up-delay-3 {
+  animation: hero-fade-up 0.4s ease-out 0.18s both;
+}
+.animate-hero-fade-up-delay-4 {
+  animation: hero-fade-up 0.4s ease-out 0.24s both;
+}
+
+.animate-svg-float         { animation: svg-float 4s ease-in-out infinite; }
+.animate-svg-float-reverse { animation: svg-float-reverse 4s ease-in-out infinite; }
+.animate-svg-float-slow    { animation: svg-float 6s ease-in-out infinite; }
+
+@keyframes gentle-bounce {
+  0%, 100% { transform: translateY(0); }
+  25%      { transform: translateY(-3px); }
+  50%      { transform: translateY(0); }
+  75%      { transform: translateY(-2px); }
+}
+.animate-gentle-bounce {
+  animation: gentle-bounce 2s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+/* ================================================================== */
+/*  2) BUTTON HOVER (hero & primary)                                   */
+/* ================================================================== */
+button[class*="hero"],
+a[class*="hero"] {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out;
+}
+button[class*="hero"]:hover,
+a[class*="hero"]:hover {
+  transform: scale(1.02);
+}
+
+/* ================================================================== */
+/*  3) SITUATION CARD hover + selected                                 */
+/* ================================================================== */
+.situation-card {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.15s ease-out;
+}
+.situation-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.situation-card.is-selected {
+  border-color: hsl(var(--accent));
+  border-width: 2px;
+}
+
+/* ================================================================== */
+/*  4) CASE STUDY SCROLL-IN (IntersectionObserver)                     */
+/* ================================================================== */
+@keyframes card-scroll-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.case-card-observe {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.case-card-observe.is-visible {
+  animation: card-scroll-in 0.28s ease-out forwards;
+}
+
+/* Case card image hover */
+.case-card-observe:hover img {
+  transform: scale(1.02);
+  transition: transform 0.2s ease-out;
+}
+/* Tag row reveal on hover */
+.case-card-tags {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+.case-card-observe:hover .case-card-tags {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ================================================================== */
+/*  5) FORM — FLOATING LABELS                                          */
+/* ================================================================== */
+.form-field-floating {
+  position: relative;
+}
+.form-field-floating label {
+  transition: transform 0.18s ease-out, font-size 0.18s ease-out, color 0.18s ease-out;
+}
+.form-field-floating input:focus + label,
+.form-field-floating input:not(:placeholder-shown) + label,
+.form-field-floating textarea:focus + label,
+.form-field-floating textarea:not(:placeholder-shown) + label {
+  transform: translateY(-8px);
+  font-size: 0.7rem;
+}
+.form-field-floating input:focus,
+.form-field-floating textarea:focus {
+  border-color: hsl(var(--primary));
+  transition: border-color 0.15s ease-out;
+}
+
+/* Submit button states */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+.btn-success-pop {
+  animation: success-pop 0.15s ease-out;
+}
+@keyframes success-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+/* ================================================================== */
+/*  6a) NAV UNDERLINE                                                  */
+/* ================================================================== */
+.nav-link-underline {
+  position: relative;
+}
+.nav-link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: hsl(var(--primary));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.15s ease-out;
+}
+.nav-link-underline:hover::after,
+.nav-link-underline:focus-visible::after,
+.nav-link-underline.is-active::after {
+  transform: scaleX(1);
+}
+
+/* ================================================================== */
+/*  6b) COAST 2 COAST TOOLTIP                                          */
+/* ================================================================== */
+.c2c-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+.c2c-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  font-size: 0.7rem;
+  line-height: 1.45;
+  padding: 8px 12px;
+  border-radius: 8px;
+  width: max-content;
+  max-width: 280px;
+  z-index: 60;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.c2c-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: hsl(var(--foreground));
+}
+.c2c-tooltip-wrap:hover .c2c-tooltip,
+.c2c-tooltip-wrap:focus-within .c2c-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+/* "What happens next" card */
+.next-steps-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+/* ================================================================== */
+/*  REDUCED MOTION — disable non-essential animations                  */
+/* ================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-fade-up,
+  .animate-hero-fade-up-delay-1,
+  .animate-hero-fade-up-delay-2,
+  .animate-hero-fade-up-delay-3,
+  .animate-hero-fade-up-delay-4,
+  .animate-gentle-bounce,
+  .animate-svg-float,
+  .animate-svg-float-reverse,
+  .animate-svg-float-slow,
+  .case-card-observe.is-visible,
+  .btn-success-pop {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .situation-card:hover,
+  button[class*="hero"]:hover,
+  a[class*="hero"]:hover {
+    transform: none !important;
+  }
+  .case-card-tags {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
