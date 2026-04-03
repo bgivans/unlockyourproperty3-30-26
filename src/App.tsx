@@ -11,6 +11,7 @@ import RealEstateMoves from "./pages/RealEstateMoves.tsx";
 import AduFeasibility from "./pages/AduFeasibility.tsx";
 import CodeViolationGuide from "./pages/CodeViolationGuide.tsx";
 import ProbateGuide from "./pages/ProbateGuide.tsx";
+import Buy from "./pages/Buy.tsx";
 import About from "./pages/About.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<SiteLayout><Index /></SiteLayout>} />
             <Route path="/solutions/fix-develop" element={<SiteLayout><FixDevelop /></SiteLayout>} />
             <Route path="/solutions/real-estate-moves" element={<SiteLayout><RealEstateMoves /></SiteLayout>} />
+            <Route path="/buy" element={<SiteLayout><Buy /></SiteLayout>} />
             <Route path="/about" element={<SiteLayout><About /></SiteLayout>} />
             <Route path="/lp/adu-feasibility" element={<SiteLayout><AduFeasibility /></SiteLayout>} />
             <Route path="/lp/code-violation-guide" element={<SiteLayout><CodeViolationGuide /></SiteLayout>} />

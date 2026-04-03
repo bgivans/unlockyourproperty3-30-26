@@ -178,7 +178,7 @@ export default function CaseStudyHighlights({ config }: { config: CaseStudyConfi
             Property Strategy Wins
           </p>
           <h2 className="font-display text-[clamp(24px,4vw,40px)] font-bold leading-[1.15] tracking-tight text-white mb-4">
-            Real Situations. Clear Plans.
+            Real Situations. Real Outcomes.
           </h2>
           <p className="font-body text-base sm:text-lg text-white/55 leading-relaxed">
             {config.intro}

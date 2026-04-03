@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import situationCodeImg from "@/assets/situation-code-violations.jpg";
 import situationInheritedImg from "@/assets/situation-inherited.jpg";
 import situationAduImg from "@/assets/situation-adu.jpg";
@@ -49,15 +48,7 @@ const cards = [
 ];
 
 const PropertyOptionsSection = () => {
-  const [selected, setSelected] = useState<string | null>(null);
-
-  const handleCardClick = (situationValue: string) => {
-    setSelected(situationValue);
-    // Dispatch custom event to sync with StrategyCallForm dropdown
-    window.dispatchEvent(
-      new CustomEvent("situation-selected", { detail: situationValue })
-    );
-  };
+  const navigate = useNavigate();
 
   return (
     <section id="property-options" className="relative py-24 lg:py-32 bg-background">
@@ -76,16 +67,11 @@ const PropertyOptionsSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
           {cards.map((card) => {
             const Icon = card.icon;
-            const isSelected = selected === card.situationValue;
             return (
               <div
                 key={card.title}
-                onClick={() => handleCardClick(card.situationValue)}
-                className={`situation-card group relative rounded-2xl border bg-card overflow-hidden shadow-sm cursor-pointer ${
-                  isSelected
-                    ? "is-selected border-accent"
-                    : "border-border hover:shadow-lg hover:shadow-primary/8"
-                }`}
+                onClick={() => navigate(card.href)}
+                className="situation-card group relative rounded-2xl border border-border bg-card overflow-hidden shadow-sm cursor-pointer hover:shadow-lg hover:shadow-primary/8"
               >
                 {/* Image band */}
                 <div className="relative h-44 sm:h-48 overflow-hidden">
@@ -100,13 +86,6 @@ const PropertyOptionsSection = () => {
                   <span className="absolute top-4 left-4 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-card/90 backdrop-blur-sm border border-border/60 shadow-sm">
                     <Icon className="h-5 w-5 text-primary" />
                   </span>
-
-                  {/* Selected badge */}
-                  {isSelected && (
-                    <span className="absolute top-4 right-4 bg-accent text-accent-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                      Selected
-                    </span>
-                  )}
                 </div>
 
                 {/* Content */}

@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { scrollToSection } from "@/lib/scroll";
 import { ANCHOR_STRATEGY_CALL } from "@/constants";
-import { caseStudies, type CaseStudy } from "@/data/caseStudies";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { generalCaseStudies, type CaseStudy } from "@/data/caseStudies";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
-// ── Case Card ─────────────────────────────────────────────────────────────────
+// ── Card (used in carousel, clickable to open lightbox) ──────────────────────
 
-const CaseCard = ({ study, index, observe }: { study: CaseStudy; index: number; observe?: boolean }) => {
+const CaseCard = ({ study, index, onClick }: { study: CaseStudy; index: number; onClick: () => void }) => {
   const images = study.images && study.images.length > 1 ? study.images : [study.image];
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -20,9 +20,12 @@ const CaseCard = ({ study, index, observe }: { study: CaseStudy; index: number; 
   }, [images.length]);
 
   return (
-    <div className={`group rounded-xl border border-border bg-background overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 h-full flex flex-col ${observe ? 'case-card-observe' : ''}`} style={observe ? { animationDelay: `${index * 60}ms` } : undefined}>
-      {/* Crossfade image — compact 2:1 aspect */}
-      <div className="relative w-full aspect-[2/1] overflow-hidden bg-muted">
+    <div
+      onClick={onClick}
+      className="group rounded-xl border border-border bg-background overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer h-full flex flex-col"
+    >
+      {/* Crossfade image */}
+      <div className="relative w-full aspect-[16/10] overflow-hidden bg-muted">
         {images.map((src, i) => (
           <img
             key={i}
@@ -47,14 +50,13 @@ const CaseCard = ({ study, index, observe }: { study: CaseStudy; index: number; 
         )}
       </div>
 
-      {/* Content — compact spacing */}
-      <div className="px-3.5 py-3 flex flex-col flex-1 gap-1.5">
-        {/* Title row */}
+      {/* Content */}
+      <div className="px-4 py-3.5 flex flex-col flex-1 gap-2">
         <div>
           <span className="font-body text-[10px] font-semibold tracking-[0.18em] uppercase text-primary/60 block">
             Case Study {index + 1}
           </span>
-          <h3 className="font-display text-sm font-bold text-foreground leading-tight mt-0.5">
+          <h3 className="font-display text-sm sm:text-base font-bold text-foreground leading-tight mt-0.5">
             {study.title}
           </h3>
           {(study.address || study.price) && (
@@ -69,30 +71,22 @@ const CaseCard = ({ study, index, observe }: { study: CaseStudy; index: number; 
           )}
         </div>
 
-        {/* Problem / What We Did / Outcome — compact */}
-        <div className="space-y-1.5 flex-1 text-[12px] leading-snug">
+        <div className="space-y-2 flex-1 text-[13px] leading-snug">
           <div>
-            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-accent block">
-              Problem
-            </span>
-            <p className="font-body text-muted-foreground line-clamp-2">{study.problem}</p>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-accent block">Problem</span>
+            <p className="font-body text-muted-foreground">{study.problem}</p>
           </div>
           <div>
-            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">
-              What We Did
-            </span>
-            <p className="font-body text-muted-foreground line-clamp-2">{study.whatWeDid}</p>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">What We Did</span>
+            <p className="font-body text-muted-foreground">{study.whatWeDid}</p>
           </div>
           <div className="bg-primary/5 border-l-2 border-primary rounded-r px-2 py-1.5">
-            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">
-              Outcome
-            </span>
-            <p className="font-body font-medium text-foreground line-clamp-2">{study.outcome}</p>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">Outcome</span>
+            <p className="font-body font-medium text-foreground">{study.outcome}</p>
           </div>
         </div>
 
-        {/* Badges */}
-        <div className="case-card-tags flex flex-wrap gap-1 pt-1.5 border-t border-border">
+        <div className="flex flex-wrap gap-1 pt-2 border-t border-border">
           {study.badges.map((badge) => (
             <span
               key={badge}
@@ -107,136 +101,242 @@ const CaseCard = ({ study, index, observe }: { study: CaseStudy; index: number; 
   );
 };
 
-// ── Section ───────────────────────────────────────────────────────────────────
+// ── Lightbox ─────────────────────────────────────────────────────────────────
 
-/** Number of case-study cards to scroll through before the section unpins */
-const VISIBLE_CARDS = 5;
+const Lightbox = ({
+  studies,
+  currentIndex,
+  onClose,
+  onNav,
+}: {
+  studies: CaseStudy[];
+  currentIndex: number;
+  onClose: () => void;
+  onNav: (index: number) => void;
+}) => {
+  const study = studies[currentIndex];
+  const images = study.images && study.images.length > 1 ? study.images : [study.image];
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  useEffect(() => {
+    setActiveImgIdx(0);
+  }, [currentIndex]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && currentIndex > 0) onNav(currentIndex - 1);
+      if (e.key === "ArrowRight" && currentIndex < studies.length - 1) onNav(currentIndex + 1);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [currentIndex, studies.length, onClose, onNav]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+        aria-label="Close"
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      {currentIndex > 0 && (
+        <button
+          onClick={() => onNav(currentIndex - 1)}
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          aria-label="Previous case study"
+        >
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      )}
+      {currentIndex < studies.length - 1 && (
+        <button
+          onClick={() => onNav(currentIndex + 1)}
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          aria-label="Next case study"
+        >
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      )}
+
+      <div className="relative z-40 w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-background border border-border shadow-2xl mx-4">
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-muted">
+          {images.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={study.imageAlt}
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+              style={{ opacity: i === activeImgIdx ? 1 : 0 }}
+            />
+          ))}
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImgIdx(i)}
+                  className={`w-2 h-2 rounded-full transition-colors ${i === activeImgIdx ? "bg-white" : "bg-white/40"}`}
+                  aria-label={`Image ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+          <div className="absolute top-3 left-3 bg-black/50 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+            {currentIndex + 1} / {studies.length}
+          </div>
+        </div>
+
+        <div className="p-5 sm:p-7">
+          <span className="font-body text-[10px] font-semibold tracking-[0.18em] uppercase text-primary/60 block">
+            Case Study {currentIndex + 1}
+          </span>
+          <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight mt-1 mb-1">
+            {study.title}
+          </h3>
+          {(study.address || study.price) && (
+            <div className="flex flex-wrap gap-x-3 mb-4">
+              {study.address && (
+                <span className="font-body text-sm text-muted-foreground">{study.address}</span>
+              )}
+              {study.price && (
+                <span className="font-body text-sm font-semibold text-primary">{study.price}</span>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-4 text-sm sm:text-base">
+            <div>
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-accent block mb-1">Problem</span>
+              <p className="font-body text-muted-foreground leading-relaxed">{study.problem}</p>
+            </div>
+            <div>
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-primary block mb-1">What We Did</span>
+              <p className="font-body text-muted-foreground leading-relaxed">{study.whatWeDid}</p>
+            </div>
+            <div className="bg-primary/5 border-l-2 border-primary rounded-r px-4 py-3">
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-primary block mb-1">Outcome</span>
+              <p className="font-body font-medium text-foreground leading-relaxed">{study.outcome}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-border">
+            {study.badges.map((badge) => (
+              <span
+                key={badge}
+                className="font-body text-xs font-medium tracking-wide text-primary bg-primary/8 rounded-full px-3 py-1"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Main Section with Carousel ───────────────────────────────────────────────
+
+const CARDS_PER_PAGE = 3;
 
 const HowWeHelpSection = () => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [maxTranslate, setMaxTranslate] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
 
-  // IntersectionObserver for card scroll-in
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    const cards = track.querySelectorAll<HTMLElement>('.case-card-observe');
-    if (cards.length === 0) return;
+  const totalPages = Math.ceil(generalCaseStudies.length / CARDS_PER_PAGE);
+  const startIdx = page * CARDS_PER_PAGE;
+  const visibleStudies = generalCaseStudies.slice(startIdx, startIdx + CARDS_PER_PAGE);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -20px 0px' }
-    );
-
-    cards.forEach((card, i) => {
-      if (i < 8) {
-        observer.observe(card);
-      } else {
-        card.classList.add('is-visible');
-      }
-    });
-
-    return () => observer.disconnect();
+  const prevPage = useCallback(() => {
+    setPage((p) => Math.max(0, p - 1));
   }, []);
 
-  // Measure the actual pixel distance to scroll through VISIBLE_CARDS cards
-  useEffect(() => {
-    const measure = () => {
-      const track = trackRef.current;
-      if (!track) return;
-      const cards = track.querySelectorAll<HTMLElement>("[data-card]");
-      if (cards.length === 0) return;
+  const nextPage = useCallback(() => {
+    setPage((p) => Math.min(totalPages - 1, p + 1));
+  }, [totalPages]);
 
-      const lastVisibleIndex = Math.min(VISIBLE_CARDS, cards.length - 1);
-      const targetCard = cards[lastVisibleIndex];
-      const distance = targetCard.offsetLeft - cards[0].offsetLeft;
-      setMaxTranslate(distance);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+  const openLightbox = useCallback((globalIndex: number) => {
+    setLightboxIndex(globalIndex);
   }, []);
 
-  // framer-motion scroll tracking
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
+  const closeLightbox = useCallback(() => {
+    setLightboxIndex(null);
+  }, []);
 
-  const x = useTransform(scrollYProgress, [0, 1], [0, -maxTranslate]);
-  const progressScale = useTransform(scrollYProgress, [0, 1], [0.04, 1]);
+  const navLightbox = useCallback((index: number) => {
+    setLightboxIndex(index);
+  }, []);
 
   return (
     <section id="how-we-help" className="bg-card">
-      {/* Normal-flow header */}
-      <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-24 lg:pt-32 pb-6">
+      {/* Header */}
+      <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-24 lg:pt-32 pb-8">
         <div className="max-w-xl">
           <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-4">
-            Real Situations. Clear Plans.
+            Real Properties. Real Outcomes.
           </h2>
           <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
-            Here's how we help property owners move from stuck situations to clear, profitable next steps.
-            <span className="hidden md:inline text-muted-foreground/60"> Scroll down to explore.</span>
+            See how different property situations were evaluated and turned into clear, profitable solutions.
           </p>
         </div>
       </div>
 
-      {/* Scroll-driven area */}
-      <div ref={sectionRef} style={{ height: `${VISIBLE_CARDS * 100}vh` }} className="relative">
-        <div className="sticky top-16 h-[calc(100vh-4rem)] flex flex-col justify-center overflow-hidden py-4">
-          {/* Horizontal scroll track */}
-          <motion.div
-            ref={trackRef}
-            style={{ x }}
-            className="flex gap-4 lg:gap-5 px-5 sm:px-8 lg:px-12 will-change-transform items-stretch"
+      {/* Cards with side arrows */}
+      <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-12">
+        <div className="relative">
+          {/* Left arrow */}
+          <button
+            onClick={prevPage}
+            disabled={page === 0}
+            className="absolute -left-2 sm:-left-4 lg:-left-14 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-border bg-background shadow-md flex items-center justify-center text-foreground transition-colors hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Previous case studies"
           >
-            {caseStudies.map((study, i) => (
-              <div
-                key={i}
-                data-card
-                className={[
-                  "shrink-0",
-                  "w-[280px]",
-                  "sm:w-[300px]",
-                  "lg:w-[320px]",
-                  "xl:w-[340px]",
-                ].join(" ")}
-              >
-                <CaseCard study={study} index={i} observe />
-              </div>
-            ))}
-            <div className="shrink-0 w-1 lg:w-5" aria-hidden />
-          </motion.div>
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
 
-          {/* Progress bar */}
-          <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 mt-4">
-            <div className="h-[3px] bg-border rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-primary/60 rounded-full origin-left"
-                style={{ scaleX: progressScale }}
+          {/* Right arrow */}
+          <button
+            onClick={nextPage}
+            disabled={page === totalPages - 1}
+            className="absolute -right-2 sm:-right-4 lg:-right-14 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-border bg-background shadow-md flex items-center justify-center text-foreground transition-colors hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Next case studies"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+
+          {/* Cards grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+            {visibleStudies.map((study, i) => (
+              <CaseCard
+                key={startIdx + i}
+                study={study}
+                index={startIdx + i}
+                onClick={() => openLightbox(startIdx + i)}
               />
-            </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="font-body text-[11px] text-muted-foreground/50">
-                {caseStudies.length} case studies
-              </span>
-              <span className="font-body text-[11px] text-muted-foreground/50">
-                Keep scrolling to explore
-              </span>
-            </div>
+            ))}
+          </div>
+
+          {/* Page indicator */}
+          <div className="flex justify-center mt-6">
+            <span className="font-body text-sm text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Bottom CTA — normal flow, appears after scroll section unpins */}
+      {/* Bottom CTA */}
       <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-14 lg:py-16 text-center">
         <h3 className="font-display text-[clamp(20px,3vw,30px)] font-bold text-foreground mb-5">
           Need a clear plan for your property?
@@ -250,6 +350,16 @@ const HowWeHelpSection = () => {
           Talk Through Your Situation
         </Button>
       </div>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <Lightbox
+          studies={generalCaseStudies}
+          currentIndex={lightboxIndex}
+          onClose={closeLightbox}
+          onNav={navLightbox}
+        />
+      )}
     </section>
   );
 };

@@ -3,7 +3,7 @@ import { scrollToSection } from "@/lib/scroll";
 import { ANCHOR_PROPERTY_OPTIONS, ANCHOR_STRATEGY_CALL } from "@/constants";
 
 const HeroSection = () => (
-  <section className="relative overflow-hidden bg-black min-h-[100dvh] flex flex-col justify-center md:min-h-0 md:block">
+  <section className="relative overflow-hidden bg-black min-h-[100dvh] flex flex-col justify-center">
     {/* Video background */}
     <video
       autoPlay
@@ -48,19 +48,16 @@ const HeroSection = () => (
             variant="hero"
             size="hero"
             className="w-full md:w-auto"
-            onClick={() => scrollToSection(ANCHOR_PROPERTY_OPTIONS)}
+            onClick={() => scrollToSection(ANCHOR_STRATEGY_CALL)}
           >
             See Your Property Options
           </Button>
-          <Button
-            variant="heroOutline"
-            size="hero"
-            className="w-full md:w-auto border-white/30 text-white hover:border-white hover:text-white hover:bg-white/10"
-            onClick={() => scrollToSection(ANCHOR_STRATEGY_CALL)}
-          >
-            Schedule a Strategy Call
-          </Button>
         </div>
+
+        {/* Trust line */}
+        <p className="animate-hero-fade-up-delay-3 font-body text-sm font-semibold text-red-500 mt-4">
+          Trusted by homeowners, trustees, and investors across Southern California.
+        </p>
       </div>
     </div>
   </section>

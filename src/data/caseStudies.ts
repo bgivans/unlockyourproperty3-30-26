@@ -1,8 +1,3 @@
-import caseStudy1Img from "@/assets/case-study-1.jpg";
-import caseStudy2Img from "@/assets/case-study-2.jpg";
-import caseStudy3Img from "@/assets/case-study-3.jpg";
-import caseStudy4Img from "@/assets/case-study-4.jpg";
-
 // Real case study photos
 import triplexHemetExtImg from "@/assets/cs-triplex-hemet-exterior.jpg";
 import triplexHemetAerialImg from "@/assets/cs-triplex-hemet-aerial.jpg";
@@ -82,6 +77,7 @@ export type CaseStudy = {
   images?: string[];
   imageAlt: string;
   badges: string[];
+  category?: "adu" | "general";
 };
 
 export const caseStudies: CaseStudy[] = [
@@ -275,6 +271,7 @@ export const caseStudies: CaseStudy[] = [
     images: [delMarAdu1Img, delMarAdu2Img, delMarAdu3Img],
     imageAlt: "Del Mar ADU — before and after construction",
     badges: ["ADU Construction", "Home Equity", "Passive Income"],
+    category: "adu",
   },
   {
     title: "Escondido ADU — Owner Builder Construction",
@@ -285,6 +282,7 @@ export const caseStudies: CaseStudy[] = [
     images: [escondidoAdu1Img, escondidoAdu2Img],
     imageAlt: "Escondido ADU — new construction before and after",
     badges: ["ADU Construction", "Owner Builder", "Permit Approval"],
+    category: "adu",
   },
   {
     title: "Illegal Garage Conversion — Code Violation Resolved",
@@ -295,6 +293,7 @@ export const caseStudies: CaseStudy[] = [
     images: [escondidoGarage1Img, escondidoGarage2Img],
     imageAlt: "Escondido garage conversion — illegal to legal ADU",
     badges: ["Garage Conversion", "Code Violation", "Legal ADU"],
+    category: "adu",
   },
   {
     title: "El Cajon Full Renovation — Complete Transformation",
@@ -326,42 +325,16 @@ export const caseStudies: CaseStudy[] = [
     imageAlt: "Escondido renovation project — before and after transformation",
     badges: ["Full Renovation", "Before & After", "Value Add"],
   },
-
-  // ── Original placeholder case studies ────────────────────────────────
-  {
-    title: "Outdated Rental With Low Income",
-    problem: "The owner had a run-down rental with below-market rents and no clear path to improve returns or exit cleanly.",
-    whatWeDid: "We helped repair the property, identified the right buyer, negotiated key concessions, and structured a 1031 exchange.",
-    outcome: "The seller exited cleanly and reinvested into a stronger rental with better long-term upside.",
-    image: caseStudy1Img,
-    imageAlt: "Before and after property transformation",
-    badges: ["1031 Exchange", "Property Repairs", "Buyer Negotiation"],
-  },
-  {
-    title: "Homeowner Stuck in a Slow Market",
-    problem: "The homeowner needed to sell in a slow market and worried the right buyer would never show up.",
-    whatWeDid: "We matched the property with a VA buyer and structured terms that worked for both sides.",
-    outcome: "The seller achieved a top-dollar sale and moved smoothly into their next home.",
-    image: caseStudy2Img,
-    imageAlt: "Home sold successfully",
-    badges: ["VA Buyer", "Creative Terms", "Top-Dollar Sale"],
-  },
-  {
-    title: "Tenant Trouble Exit",
-    problem: "Uncooperative tenants, property damage, and financing issues were turning the property into a constant headache.",
-    whatWeDid: "We handled notice strategy, negotiated cash-for-keys, matched the deal with a cash buyer, and structured a tax-deferred exit.",
-    outcome: "The seller turned a stressful situation into liquidity and a clean exit.",
-    image: caseStudy3Img,
-    imageAlt: "Distressed property to clean exit",
-    badges: ["Cash for Keys", "Cash Buyer", "Tax-Deferred Exit"],
-  },
-  {
-    title: "Unlocking Hidden Value",
-    problem: "The owner had an underperforming property and was unsure how to unlock its full potential.",
-    whatWeDid: "We repositioned the property and structured a 1031 exchange that moved the owner from a single-door asset into a stronger multi-property portfolio.",
-    outcome: "One underperforming property became three better-performing assets.",
-    image: caseStudy4Img,
-    imageAlt: "One property growing into three properties",
-    badges: ["1031 Exchange", "Portfolio Growth", "Repositioning Strategy"],
-  },
 ];
+
+export const aduCaseStudies = caseStudies.filter((s) => s.category === "adu");
+
+const prioritizedTitles = [
+  "6-Unit Exit — 1031 Exchange Reinvestment",
+  "Military Family Downsize & Relocation",
+  "Vacant Rental — FHA Upgrade & Reinvestment",
+];
+const nonAdu = caseStudies.filter((s) => s.category !== "adu");
+const pinned = prioritizedTitles.map((t) => nonAdu.find((s) => s.title === t)!).filter(Boolean);
+const rest = nonAdu.filter((s) => !prioritizedTitles.includes(s.title));
+export const generalCaseStudies = [...pinned, ...rest];

@@ -10,8 +10,8 @@ const links = [
   { label: "Home", to: "/" },
   { label: "Fix & Develop", to: "/solutions/fix-develop" },
   { label: "Real Estate Moves", to: "/solutions/real-estate-moves" },
+  { label: "Buy", to: "/buy" },
   { label: "About", to: "/about" },
-  { label: "Strategy Call", to: "/#strategy-call" },
 ];
 
 const SiteHeader = () => {

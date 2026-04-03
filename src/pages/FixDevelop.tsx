@@ -26,7 +26,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Home, PlusSquare, Warehouse, DoorOpen, Search, Pencil, FileText, ClipboardCheck, Hammer, AlertTriangle, ShieldCheck, DollarSign } from "lucide-react";
+import { Home, PlusSquare, Warehouse, DoorOpen, Search, Pencil, FileText, ClipboardCheck, Hammer, AlertTriangle, ShieldCheck, DollarSign, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { aduCaseStudies, type CaseStudy } from "@/data/caseStudies";
 import codeViolationGuideImg from "@/assets/code-violation-guide-mockup.png";
 import aduDetachedImg from "@/assets/adu-detached.png";
 import aduAttachedImg from "@/assets/adu-attached.png";
@@ -87,19 +88,6 @@ const aduTypes = [
       "You have an underused garage",
       "You want to reuse an existing structure",
       "You're looking for a faster build timeline",
-    ],
-  },
-  {
-    title: "Junior ADU (JADU)",
-    shortTitle: "JADU",
-    description:
-      "A small unit (up to 500 sq ft) created within the existing home — typically a converted bedroom with a separate entrance.",
-    icon: DoorOpen,
-    image: aduJaduImg,
-    bullets: [
-      "You have a spare bedroom to convert",
-      "You need a smaller, lower-cost option",
-      "You want multi-generational living under one roof",
     ],
   },
 ];
@@ -337,6 +325,230 @@ const fixDevelopCaseStudyConfig: CaseStudyConfig = {
 };
 
 /* ------------------------------------------------------------------ */
+/*  ADU Case Studies — Card                                            */
+/* ------------------------------------------------------------------ */
+const AduCaseCard = ({ study, index, onClick }: { study: CaseStudy; index: number; onClick: () => void }) => {
+  const images = study.images && study.images.length > 1 ? study.images : [study.image];
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    if (images.length < 2) return;
+    const timer = setInterval(() => setActiveIdx((i) => (i + 1) % images.length), 5000);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <div onClick={onClick} className="group rounded-xl border border-border bg-background overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer h-full flex flex-col">
+      <div className="relative w-full aspect-[16/10] overflow-hidden bg-muted">
+        {images.map((src, i) => (
+          <img key={i} src={src} alt={study.imageAlt} draggable={false} className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 pointer-events-none" style={{ opacity: i === activeIdx ? 1 : 0 }} />
+        ))}
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+            {images.map((_, i) => (
+              <button key={i} onClick={(e) => { e.stopPropagation(); setActiveIdx(i); }} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeIdx ? "bg-white" : "bg-white/40"}`} aria-label={`Image ${i + 1}`} />
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="px-4 py-3.5 flex flex-col flex-1 gap-2">
+        <div>
+          <span className="font-body text-[10px] font-semibold tracking-[0.18em] uppercase text-primary/60 block">Case Study {index + 1}</span>
+          <h3 className="font-display text-sm sm:text-base font-bold text-foreground leading-tight mt-0.5">{study.title}</h3>
+          {(study.address || study.price) && (
+            <div className="flex flex-wrap gap-x-2 mt-0.5">
+              {study.address && <span className="font-body text-[11px] text-muted-foreground">{study.address}</span>}
+              {study.price && <span className="font-body text-[11px] font-semibold text-primary">{study.price}</span>}
+            </div>
+          )}
+        </div>
+        <div className="space-y-2 flex-1 text-[13px] leading-snug">
+          <div>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-accent block">Problem</span>
+            <p className="font-body text-muted-foreground">{study.problem}</p>
+          </div>
+          <div>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">What We Did</span>
+            <p className="font-body text-muted-foreground">{study.whatWeDid}</p>
+          </div>
+          <div className="bg-primary/5 border-l-2 border-primary rounded-r px-2 py-1.5">
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">Outcome</span>
+            <p className="font-body font-medium text-foreground">{study.outcome}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1 pt-2 border-t border-border">
+          {study.badges.map((badge) => (
+            <span key={badge} className="font-body text-[10px] font-medium tracking-wide text-primary bg-primary/8 rounded-full px-2 py-0.5">{badge}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  ADU Case Studies — Lightbox                                        */
+/* ------------------------------------------------------------------ */
+const AduLightbox = ({ studies, currentIndex, onClose, onNav }: { studies: CaseStudy[]; currentIndex: number; onClose: () => void; onNav: (i: number) => void }) => {
+  const study = studies[currentIndex];
+  const images = study.images && study.images.length > 1 ? study.images : [study.image];
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  useEffect(() => { setActiveImgIdx(0); }, [currentIndex]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && currentIndex > 0) onNav(currentIndex - 1);
+      if (e.key === "ArrowRight" && currentIndex < studies.length - 1) onNav(currentIndex + 1);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [currentIndex, studies.length, onClose, onNav]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <button onClick={onClose} className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Close"><X className="w-5 h-5" /></button>
+      {currentIndex > 0 && (
+        <button onClick={() => onNav(currentIndex - 1)} className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Previous"><ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" /></button>
+      )}
+      {currentIndex < studies.length - 1 && (
+        <button onClick={() => onNav(currentIndex + 1)} className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Next"><ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" /></button>
+      )}
+      <div className="relative z-40 w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-background border border-border shadow-2xl mx-4">
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-muted">
+          {images.map((src, i) => (
+            <img key={i} src={src} alt={study.imageAlt} draggable={false} className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500" style={{ opacity: i === activeImgIdx ? 1 : 0 }} />
+          ))}
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+              {images.map((_, i) => (
+                <button key={i} onClick={() => setActiveImgIdx(i)} className={`w-2 h-2 rounded-full transition-colors ${i === activeImgIdx ? "bg-white" : "bg-white/40"}`} aria-label={`Image ${i + 1}`} />
+              ))}
+            </div>
+          )}
+          <div className="absolute top-3 left-3 bg-black/50 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{currentIndex + 1} / {studies.length}</div>
+        </div>
+        <div className="p-5 sm:p-7">
+          <span className="font-body text-[10px] font-semibold tracking-[0.18em] uppercase text-primary/60 block">Case Study {currentIndex + 1}</span>
+          <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight mt-1 mb-1">{study.title}</h3>
+          {(study.address || study.price) && (
+            <div className="flex flex-wrap gap-x-3 mb-4">
+              {study.address && <span className="font-body text-sm text-muted-foreground">{study.address}</span>}
+              {study.price && <span className="font-body text-sm font-semibold text-primary">{study.price}</span>}
+            </div>
+          )}
+          <div className="space-y-4 text-sm sm:text-base">
+            <div>
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-accent block mb-1">Problem</span>
+              <p className="font-body text-muted-foreground leading-relaxed">{study.problem}</p>
+            </div>
+            <div>
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-primary block mb-1">What We Did</span>
+              <p className="font-body text-muted-foreground leading-relaxed">{study.whatWeDid}</p>
+            </div>
+            <div className="bg-primary/5 border-l-2 border-primary rounded-r px-4 py-3">
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-primary block mb-1">Outcome</span>
+              <p className="font-body font-medium text-foreground leading-relaxed">{study.outcome}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-border">
+            {study.badges.map((badge) => (
+              <span key={badge} className="font-body text-xs font-medium tracking-wide text-primary bg-primary/8 rounded-full px-3 py-1">{badge}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  ADU Case Studies — Section                                         */
+/* ------------------------------------------------------------------ */
+const AduCaseStudiesSection = () => {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
+
+  const perPage = 3;
+  const totalPages = Math.ceil(aduCaseStudies.length / perPage);
+  const startIdx = page * perPage;
+  const visible = aduCaseStudies.slice(startIdx, startIdx + perPage);
+
+  return (
+    <section className="py-24 lg:py-32 bg-card">
+      <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        {/* Header */}
+        <div className="max-w-xl mb-8">
+          <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-4">
+            ADU Projects. Real Results.
+          </h2>
+          <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
+            See how we've helped homeowners plan, permit, and build ADUs across Southern California.
+          </p>
+        </div>
+
+        {/* Carousel */}
+        <div className="relative">
+          {totalPages > 1 && (
+            <>
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="absolute -left-2 sm:-left-4 lg:-left-14 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-border bg-background shadow-md flex items-center justify-center text-foreground transition-colors hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page === totalPages - 1}
+                className="absolute -right-2 sm:-right-4 lg:-right-14 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-border bg-background shadow-md flex items-center justify-center text-foreground transition-colors hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            </>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+            {visible.map((study, i) => (
+              <AduCaseCard
+                key={startIdx + i}
+                study={study}
+                index={startIdx + i}
+                onClick={() => setLightboxIndex(startIdx + i)}
+              />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
+              <span className="font-body text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {lightboxIndex !== null && (
+        <AduLightbox
+          studies={aduCaseStudies}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNav={(i) => setLightboxIndex(i)}
+        />
+      )}
+    </section>
+  );
+};
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 const FixDevelop = () => {
@@ -418,7 +630,7 @@ const FixDevelop = () => {
       {/* ============================================================ */}
       <section
         id="top"
-        className="relative overflow-hidden bg-[hsl(var(--hero-navy))] min-h-[100dvh] flex flex-col justify-center md:min-h-0 md:block"
+        className="relative overflow-hidden bg-[hsl(var(--hero-navy))] min-h-[100dvh] flex flex-col justify-center"
       >
         {/* Video background */}
         <video
@@ -511,7 +723,7 @@ const FixDevelop = () => {
                     controls
                     preload="metadata"
                     playsInline
-                    src="/media/why-build-adu.mp4#t=1"
+                    src="/media/why-build-adu.mp4#t=0"
                     onClick={(e) => {
                       const video = e.currentTarget;
                       if (video.paused) video.play();
@@ -535,60 +747,73 @@ const FixDevelop = () => {
       <AduTypesSection />
 
       {/* ============================================================ */}
-      {/*  ADU Financing                                                */}
-      {/* ============================================================ */}
-      <section className="py-24 lg:py-32 bg-background">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <div className="max-w-3xl">
-            <p className="font-body text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-              Education, Not Lenders
-            </p>
-            <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
-              ADU Financing
-            </h2>
-            <p className="font-body text-hero-sub leading-relaxed text-muted-foreground mb-8">
-              Many homeowners use financing to help make their ADU project possible, with common options including a <strong className="text-foreground">HELOC</strong>, <strong className="text-foreground">cash-out refinance</strong>, <strong className="text-foreground">construction loan</strong>, or <strong className="text-foreground">personal savings</strong>. The right path depends on your available equity, financial goals, and lender qualifications.
-            </p>
-            <p className="font-body text-sm font-semibold uppercase tracking-widest text-accent">
-              Free financing guidance
-            </p>
-            <div className="mt-10 flex items-center gap-5">
-              <img
-                src={raulGarciaImg}
-                alt="Raul Garcia, partnered lender"
-                className="w-20 h-20 rounded-full object-cover object-top border-2 border-border shadow-md"
-              />
-              <div>
-                <p className="font-display text-lg font-semibold text-foreground">Raul Garcia</p>
-                <p className="font-body text-sm text-muted-foreground">Partnered Lender &middot; NMLS #1205424</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/*  SECTION 4 — Can Your Property Support an ADU?               */}
+      {/*  ADU Feasibility + Financing — Combined Side-by-Side          */}
       {/* ============================================================ */}
       <section id="adu-feasibility" className="py-24 lg:py-32 bg-background">
         <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:gap-16">
-            <div className="lg:flex-1 mb-10 lg:mb-0">
-              <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+            {/* Left — Can Your Property Support an ADU? */}
+            <div className="rounded-2xl border border-border bg-card p-7 sm:p-9 shadow-sm flex flex-col">
+              <h2 className="font-display text-[clamp(22px,3vw,32px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
                 Can Your Property Support an ADU?
               </h2>
-              <p className="font-body text-hero-sub leading-relaxed text-muted-foreground mb-8">
+              <p className="font-body text-sm sm:text-base leading-relaxed text-muted-foreground mb-8 flex-1">
                 Several factors determine whether your property is eligible for an ADU — including zoning, lot size, setback requirements, existing structures, utility access, and parking. A feasibility review helps identify what's possible before you invest time or money.
               </p>
-            </div>
-            <div className="lg:flex-shrink-0 lg:w-[400px]">
               <img
                 src={adu3dModelImg}
                 alt="3D site planning model showing ADU placement on a residential lot"
-                className="w-full rounded-xl object-cover aspect-[4/3] shadow-lg"
+                className="w-full rounded-xl object-cover aspect-[16/10] shadow-md mb-6"
               />
-              <Button variant="hero" size="hero" className="mt-6 w-full" onClick={() => scrollToSection("adu-guide")}>
+              <Button variant="hero" size="hero" className="w-full" onClick={() => scrollToSection("adu-guide")}>
                 Book My Appointment
               </Button>
+            </div>
+
+            {/* Right — ADU Financing */}
+            <div className="rounded-2xl border border-border bg-card p-7 sm:p-9 shadow-sm flex flex-col">
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-primary mb-3">
+                Education, Not Lenders
+              </p>
+              <h2 className="font-display text-[clamp(22px,3vw,32px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+                ADU Financing
+              </h2>
+              <p className="font-body text-sm sm:text-base leading-relaxed text-muted-foreground mb-6">
+                Many homeowners use financing to help make their ADU project possible, with common options including a <strong className="text-foreground">HELOC</strong>, <strong className="text-foreground">cash-out refinance</strong>, <strong className="text-foreground">construction loan</strong>, or <strong className="text-foreground">personal savings</strong>. The right path depends on your available equity, financial goals, and lender qualifications.
+              </p>
+              <div className="grid grid-cols-2 gap-3 mb-8 flex-1">
+                {[
+                  { label: "HELOC", desc: "Borrow against your existing home equity", icon: Home },
+                  { label: "Cash-Out Refi", desc: "Replace your mortgage and pull out equity", icon: DollarSign },
+                  { label: "Construction Loan", desc: "Short-term financing for the build", icon: Hammer },
+                  { label: "Personal Savings", desc: "Fund the project without debt", icon: ShieldCheck },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-xl border border-border bg-background p-4 hover:shadow-sm transition-shadow duration-200">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                        <Icon className="w-4.5 h-4.5 text-primary" />
+                      </div>
+                      <p className="font-body text-sm font-semibold text-foreground leading-tight mb-1">{item.label}</p>
+                      <p className="font-body text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="font-body text-sm font-semibold uppercase tracking-widest text-accent mb-6">
+                Free financing guidance
+              </p>
+              <div className="flex items-center gap-5 rounded-xl border border-border bg-background p-5">
+                <img
+                  src={raulGarciaImg}
+                  alt="Raul Garcia, partnered lender"
+                  className="w-16 h-16 rounded-full object-cover object-top border-2 border-border shadow-md"
+                />
+                <div>
+                  <p className="font-display text-lg font-semibold text-foreground">Raul Garcia</p>
+                  <p className="font-body text-sm text-muted-foreground">Partnered Lender &middot; NMLS #1205424</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -597,23 +822,19 @@ const FixDevelop = () => {
       {/* ============================================================ */}
       {/*  SECTION 6 — ADU Development Path                            */}
       {/* ============================================================ */}
-      <section className="py-24 lg:py-32 bg-background">
+      <section className="py-24 lg:py-32 bg-card">
         <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          {/* Section header with construction photo strip */}
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-14 lg:mb-20">
-            <div className="max-w-xl">
-              <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-3">
-                The ADU Development Path
-              </h2>
-              <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
-                We handle every stage of the ADU process so you can move forward with confidence.
-              </p>
-            </div>
-            <div className="hidden lg:flex gap-3 mt-6 lg:mt-0">
-              <img src={aduFoundationImg} alt="Foundation pour with excavator" className="w-28 h-20 rounded-lg object-cover shadow-md" />
-              <img src={aduLumberImg} alt="Lumber and framing materials on site" className="w-28 h-20 rounded-lg object-cover shadow-md" />
-              <img src={aduRoofCraneImg} alt="Roof being craned onto ADU structure" className="w-28 h-20 rounded-lg object-cover shadow-md" />
-            </div>
+          {/* Header — centered */}
+          <div className="text-center max-w-2xl mx-auto mb-14 lg:mb-20">
+            <p className="font-body text-xs font-semibold uppercase tracking-widest text-primary mb-3">
+              From Planning to Move-In
+            </p>
+            <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-4">
+              The ADU Development Path
+            </h2>
+            <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
+              We handle every stage of the ADU process so you can move forward with confidence.
+            </p>
           </div>
 
           {/* Mobile: vertical timeline */}
@@ -642,22 +863,26 @@ const FixDevelop = () => {
             })}
           </div>
 
-          {/* Desktop: horizontal stepper with cards */}
-          <div className="hidden lg:grid grid-cols-5 gap-4">
+          {/* Desktop: card-based stepper */}
+          <div className="hidden lg:grid lg:grid-cols-5 gap-5">
             {devSteps.map((step, i) => {
               const Icon = step.icon;
               return (
                 <div key={step.number} className="relative group">
-                  {/* Connecting line */}
+                  {/* Connecting line between cards */}
                   {i < devSteps.length - 1 && (
-                    <div className="absolute top-6 left-[calc(50%+30px)] h-[2px] bg-border w-[calc(100%-30px)] z-0" />
+                    <div className="absolute top-1/2 -right-2.5 w-5 h-[2px] bg-primary/20 z-0" />
                   )}
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-4 relative z-10 shadow-md shadow-primary/20 transition-transform duration-200 group-hover:scale-110">
-                      <Icon className="w-5 h-5 text-primary-foreground" />
+                  <div className="relative rounded-2xl border border-border bg-background p-6 text-center shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 h-full flex flex-col items-center">
+                    {/* Step badge */}
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-display text-xs font-bold shadow-md">
+                      {step.number}
+                    </span>
+                    {/* Icon */}
+                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mt-3 mb-4 transition-transform duration-200 group-hover:scale-110">
+                      <Icon className="w-6 h-6 text-primary" />
                     </div>
-                    <span className="font-body text-xs font-bold text-primary tracking-widest uppercase mb-1">Step {step.number}</span>
-                    <h3 className="font-display text-lg font-semibold text-foreground leading-snug mb-2">
+                    <h3 className="font-display text-base font-semibold text-foreground leading-snug mb-2">
                       {step.title}
                     </h3>
                     <p className="font-body text-sm text-muted-foreground leading-relaxed">
@@ -670,6 +895,11 @@ const FixDevelop = () => {
           </div>
         </div>
       </section>
+
+      {/* ============================================================ */}
+      {/*  ADU Case Studies Carousel                                    */}
+      {/* ============================================================ */}
+      <AduCaseStudiesSection />
 
       {/* ============================================================ */}
       {/*  SECTION 7 — Free ADU Development Guide                      */}
@@ -756,8 +986,18 @@ const FixDevelop = () => {
       {/* ============================================================ */}
 
       {/* CV-1 — Hero with form */}
-      <section id="code-violations" className="relative py-24 lg:py-32 overflow-hidden" style={{ background: 'linear-gradient(160deg, hsl(0 0% 10%), hsl(0 0% 16%))' }}>
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h40v40H0z\' fill=\'none\'/%3E%3Cpath d=\'M0 40L40 0\' stroke=\'white\' stroke-width=\'.5\'/%3E%3C/svg%3E")' }} />
+      <section id="code-violations" className="relative py-24 lg:py-32 overflow-hidden">
+        {/* Background video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/media/fix-develop-hero.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-black/70 pointer-events-none" />
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
           <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-center">
             {/* Left — copy */}
@@ -1051,10 +1291,7 @@ const FixDevelop = () => {
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/*  SHARE BUTTONS                                                */}
-      {/* ============================================================ */}
-      <ShareButtons config={{ path: "fix_develop", pageUrl: window.location.origin + "/solutions/fix-develop" }} />
+      {/* (Share buttons removed) */}
 
       {/* ============================================================ */}
       {/*  CASE STUDY HIGHLIGHTS                                        */}

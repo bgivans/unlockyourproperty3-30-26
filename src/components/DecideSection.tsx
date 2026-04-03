@@ -15,7 +15,7 @@ const DecideSection = () => {
               How We Help You Decide
             </h2>
             <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
-              We start by understanding your property, your goals, and your timeline. Then we map the real options in front of you and help you choose whether to sell, improve, exchange, legalize, or reposition — so you're not guessing alone.
+              We help you evaluate your property, understand your options, and choose the best path forward—before you make a costly decision.
             </p>
           </div>
 
