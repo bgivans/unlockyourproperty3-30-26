@@ -13,6 +13,7 @@ import CodeViolationGuide from "./pages/CodeViolationGuide.tsx";
 import ProbateGuide from "./pages/ProbateGuide.tsx";
 import Buy from "./pages/Buy.tsx";
 import About from "./pages/About.tsx";
+import Probate from "./pages/Probate.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const App = () => (
@@ -28,9 +29,10 @@ const App = () => (
             <Route path="/solutions/real-estate-moves" element={<SiteLayout><RealEstateMoves /></SiteLayout>} />
             <Route path="/buy" element={<SiteLayout><Buy /></SiteLayout>} />
             <Route path="/about" element={<SiteLayout><About /></SiteLayout>} />
-            <Route path="/lp/adu-feasibility" element={<SiteLayout><AduFeasibility /></SiteLayout>} />
-            <Route path="/lp/code-violation-guide" element={<SiteLayout><CodeViolationGuide /></SiteLayout>} />
-            <Route path="/lp/probate-guide" element={<SiteLayout><ProbateGuide /></SiteLayout>} />
+            <Route path="/probate" element={<SiteLayout><Probate /></SiteLayout>} />
+            <Route path="/lp/adu-feasibility" element={<AduFeasibility />} />
+            <Route path="/lp/code-violation-guide" element={<CodeViolationGuide />} />
+            <Route path="/lp/probate-guide" element={<ProbateGuide />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,4 +1,4 @@
-import { useState, useId, useEffect } from "react";
+import { useState, useId, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Helmet } from "react-helmet-async";
@@ -15,8 +15,6 @@ import { Input } from "@/components/ui/input";
 import PropertyQuiz from "@/components/PropertyQuiz";
 import type { QuizConfig } from "@/components/PropertyQuiz";
 import ShareButtons from "@/components/ShareButtons";
-import CaseStudyHighlights from "@/components/CaseStudyHighlights";
-import type { CaseStudyConfig } from "@/components/CaseStudyHighlights";
 import {
   Form,
   FormControl,
@@ -26,8 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Home, PlusSquare, Warehouse, DoorOpen, Search, Pencil, FileText, ClipboardCheck, Hammer, AlertTriangle, ShieldCheck, DollarSign, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { aduCaseStudies, type CaseStudy } from "@/data/caseStudies";
+import { Home, PlusSquare, Warehouse, DoorOpen, Search, Pencil, FileText, ClipboardCheck, Hammer, AlertTriangle, ShieldCheck, DollarSign, ChevronLeft, ChevronRight, X, CheckCircle } from "lucide-react";
+import { aduCaseStudies, caseStudies, type CaseStudy } from "@/data/caseStudies";
 import codeViolationGuideImg from "@/assets/code-violation-guide-mockup.png";
 import aduDetachedImg from "@/assets/adu-detached.png";
 import aduAttachedImg from "@/assets/adu-attached.png";
@@ -35,6 +33,7 @@ import aduGarageImg from "@/assets/adu-garage.png";
 import aduJaduImg from "@/assets/adu-jadu.png";
 import aduExteriorImg from "@/assets/adu-exterior.jpg";
 import adu3dModelImg from "@/assets/adu-3d-model.jpg";
+import aduConstructionAerialImg from "@/assets/adu-construction-aerial.jpg";
 import aduElevationsImg from "@/assets/adu-elevations.png";
 import aduFoundationImg from "@/assets/adu-foundation.jpg";
 import aduRoofCraneImg from "@/assets/adu-roof-crane.jpg";
@@ -293,35 +292,205 @@ const fixDevelopQuizConfig: QuizConfig = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Case Study Config                                                  */
+/*  Fix & Develop Case Studies (filtered from master list)             */
 /* ------------------------------------------------------------------ */
-const fixDevelopCaseStudyConfig: CaseStudyConfig = {
-  path: "fix_develop",
-  intro: "Here's how owners in similar situations moved forward with a clear plan.",
-  quizSectionId: "property-quiz",
-  strategySectionId: "cv-strategy-call",
-  studies: [
-    {
-      title: "Illegal Garage Conversion — Code Violation Resolved",
-      summary: "Owner faced fines for an unpermitted garage-to-living conversion. We mapped a legalization path, coordinated permits, and closed the case.",
-      tags: ["Code Violation", "Permits", "Garage Conversion"],
-    },
-    {
-      title: "Detached ADU Build — Rental Income Unlocked",
-      summary: "Family added a 750 sq ft detached ADU to generate $2,400/mo in rental income, increasing property value by over $200k.",
-      tags: ["ADU", "Rental Income", "New Build"],
-    },
-    {
-      title: "Distressed Duplex — Renovate & Reposition",
-      summary: "Absentee owner with a neglected duplex. We planned targeted repairs, resolved deferred maintenance, and repositioned for a 1031 exchange.",
-      tags: ["Distressed Property", "Renovation", "1031 Exchange"],
-    },
-    {
-      title: "Unpermitted Room Addition — Legalize or Remove",
-      summary: "Home seller discovered an unpermitted addition during escrow. We evaluated legalization cost vs. removal and guided the right call.",
-      tags: ["Unpermitted Work", "Selling Strategy", "Permits"],
-    },
-  ],
+const fixDevStudyTitles = [
+  "Illegal Garage Conversion — Code Violation Resolved",
+  "Del Mar ADU — Equity to Passive Income",
+  "Escondido ADU — Owner Builder Construction",
+  "El Cajon Full Renovation — Complete Transformation",
+];
+const fixDevCaseStudies = fixDevStudyTitles
+  .map((t) => caseStudies.find((s) => s.title === t)!)
+  .filter(Boolean);
+
+/* ------------------------------------------------------------------ */
+/*  Fix & Develop Case Card (matches homepage design)                  */
+/* ------------------------------------------------------------------ */
+const FixDevCaseCard = ({ study, index, onClick }: { study: CaseStudy; index: number; onClick: () => void }) => {
+  const images = study.images && study.images.length > 1 ? study.images : [study.image];
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    if (images.length < 2) return;
+    const timer = setInterval(() => setActiveIdx((i) => (i + 1) % images.length), 5000);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <div
+      onClick={onClick}
+      className="group rounded-xl border border-border bg-background overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer h-full flex flex-col"
+    >
+      <div className="relative w-full aspect-[16/10] overflow-hidden bg-muted">
+        {images.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt={study.imageAlt}
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 pointer-events-none"
+            style={{ opacity: i === activeIdx ? 1 : 0 }}
+          />
+        ))}
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setActiveIdx(i); }}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeIdx ? "bg-white" : "bg-white/40"}`}
+                aria-label={`Image ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="px-4 py-3.5 flex flex-col flex-1 gap-2">
+        <div>
+          <span className="font-body text-[10px] font-semibold tracking-[0.18em] uppercase text-primary/60 block">
+            Case Study {index + 1}
+          </span>
+          <h3 className="font-display text-sm sm:text-base font-bold text-foreground leading-tight mt-0.5">
+            {study.title}
+          </h3>
+          {(study.address || study.price) && (
+            <div className="flex flex-wrap gap-x-2 mt-0.5">
+              {study.address && <span className="font-body text-[11px] text-muted-foreground">{study.address}</span>}
+              {study.price && <span className="font-body text-[11px] font-semibold text-primary">{study.price}</span>}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2 flex-1 text-[13px] leading-snug">
+          <div>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-accent block">Problem</span>
+            <p className="font-body text-muted-foreground">{study.problem}</p>
+          </div>
+          <div>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">What We Did</span>
+            <p className="font-body text-muted-foreground">{study.whatWeDid}</p>
+          </div>
+          <div className="bg-primary/5 border-l-2 border-primary rounded-r px-2 py-1.5">
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">Outcome</span>
+            <p className="font-body font-medium text-foreground">{study.outcome}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-1 pt-2 border-t border-border">
+          {study.badges.map((badge) => (
+            <span key={badge} className="font-body text-[10px] font-medium tracking-wide text-primary bg-primary/8 rounded-full px-2 py-0.5">
+              {badge}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  Fix & Develop Lightbox (matches homepage design)                   */
+/* ------------------------------------------------------------------ */
+const FixDevLightbox = ({
+  studies,
+  currentIndex,
+  onClose,
+  onNav,
+}: {
+  studies: CaseStudy[];
+  currentIndex: number;
+  onClose: () => void;
+  onNav: (index: number) => void;
+}) => {
+  const study = studies[currentIndex];
+  const images = study.images && study.images.length > 1 ? study.images : [study.image];
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  useEffect(() => { setActiveImgIdx(0); }, [currentIndex]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && currentIndex > 0) onNav(currentIndex - 1);
+      if (e.key === "ArrowRight" && currentIndex < studies.length - 1) onNav(currentIndex + 1);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [currentIndex, studies.length, onClose, onNav]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <button onClick={onClose} className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Close">
+        <X className="w-5 h-5" />
+      </button>
+      {currentIndex > 0 && (
+        <button onClick={() => onNav(currentIndex - 1)} className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Previous">
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      )}
+      {currentIndex < studies.length - 1 && (
+        <button onClick={() => onNav(currentIndex + 1)} className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Next">
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      )}
+
+      <div className="relative z-40 w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-background border border-border shadow-2xl mx-4">
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-muted">
+          {images.map((src, i) => (
+            <img key={i} src={src} alt={study.imageAlt} draggable={false} className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500" style={{ opacity: i === activeImgIdx ? 1 : 0 }} />
+          ))}
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+              {images.map((_, i) => (
+                <button key={i} onClick={() => setActiveImgIdx(i)} className={`w-2 h-2 rounded-full transition-colors ${i === activeImgIdx ? "bg-white" : "bg-white/40"}`} aria-label={`Image ${i + 1}`} />
+              ))}
+            </div>
+          )}
+          <div className="absolute top-3 left-3 bg-black/50 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+            {currentIndex + 1} / {studies.length}
+          </div>
+        </div>
+
+        <div className="p-5 sm:p-7">
+          <span className="font-body text-[10px] font-semibold tracking-[0.18em] uppercase text-primary/60 block">Case Study {currentIndex + 1}</span>
+          <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight mt-1 mb-1">{study.title}</h3>
+          {(study.address || study.price) && (
+            <div className="flex flex-wrap gap-x-3 mb-4">
+              {study.address && <span className="font-body text-sm text-muted-foreground">{study.address}</span>}
+              {study.price && <span className="font-body text-sm font-semibold text-primary">{study.price}</span>}
+            </div>
+          )}
+          <div className="space-y-4 text-sm sm:text-base">
+            <div>
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-accent block mb-1">Problem</span>
+              <p className="font-body text-muted-foreground leading-relaxed">{study.problem}</p>
+            </div>
+            <div>
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-primary block mb-1">What We Did</span>
+              <p className="font-body text-muted-foreground leading-relaxed">{study.whatWeDid}</p>
+            </div>
+            <div className="bg-primary/5 border-l-2 border-primary rounded-r px-4 py-3">
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-primary block mb-1">Outcome</span>
+              <p className="font-body font-medium text-foreground leading-relaxed">{study.outcome}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-border">
+            {study.badges.map((badge) => (
+              <span key={badge} className="font-body text-xs font-medium tracking-wide text-primary bg-primary/8 rounded-full px-3 py-1">{badge}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 /* ------------------------------------------------------------------ */
@@ -556,6 +725,7 @@ const FixDevelop = () => {
   const [violationGuideSubmitted, setViolationGuideSubmitted] = useState(false);
   const [propertyReviewSubmitted, setPropertyReviewSubmitted] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [fixDevLightboxIdx, setFixDevLightboxIdx] = useState<number | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -688,7 +858,7 @@ const FixDevelop = () => {
       {/* ============================================================ */}
       {/*  SECTION 2 — Why Homeowners Build ADUs                       */}
       {/* ============================================================ */}
-      <section id="why-build-adus" className="scroll-mt-20 py-24 lg:py-32 bg-background">
+      <section id="why-build-adus" className="py-24 lg:py-32 bg-background">
         <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
           <div className="flex flex-col lg:flex-row lg:items-center lg:gap-16">
             <div className="max-w-2xl lg:max-w-none lg:flex-1">
@@ -742,82 +912,108 @@ const FixDevelop = () => {
       </section>
 
       {/* ============================================================ */}
-      {/*  SECTION 3 — Types of ADUs                                   */}
-      {/* ============================================================ */}
-      <AduTypesSection />
-
-      {/* ============================================================ */}
-      {/*  ADU Feasibility + Financing — Combined Side-by-Side          */}
+      {/*  ADU Feasibility                                              */}
       {/* ============================================================ */}
       <section id="adu-feasibility" className="py-24 lg:py-32 bg-background">
         <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-            {/* Left — Can Your Property Support an ADU? */}
-            <div className="rounded-2xl border border-border bg-card p-7 sm:p-9 shadow-sm flex flex-col">
-              <h2 className="font-display text-[clamp(22px,3vw,32px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+          <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-center">
+            <div className="lg:w-1/2 mb-10 lg:mb-0">
+              <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
                 Can Your Property Support an ADU?
               </h2>
-              <p className="font-body text-sm sm:text-base leading-relaxed text-muted-foreground mb-8 flex-1">
+              <p className="font-body text-base sm:text-lg leading-relaxed text-muted-foreground mb-8">
                 Several factors determine whether your property is eligible for an ADU — including zoning, lot size, setback requirements, existing structures, utility access, and parking. A feasibility review helps identify what's possible before you invest time or money.
               </p>
-              <img
-                src={adu3dModelImg}
-                alt="3D site planning model showing ADU placement on a residential lot"
-                className="w-full rounded-xl object-cover aspect-[16/10] shadow-md mb-6"
-              />
-              <Button variant="hero" size="hero" className="w-full" onClick={() => scrollToSection("adu-guide")}>
+              <Button variant="hero" size="hero" className="w-full sm:w-auto" onClick={() => scrollToSection("adu-guide")}>
                 Book My Appointment
               </Button>
             </div>
+            <div className="lg:w-1/2">
+              <img
+                src={aduConstructionAerialImg}
+                alt="Aerial view of ADU construction framing next to main house"
+                className="w-full rounded-2xl object-cover aspect-[16/10] shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Right — ADU Financing */}
-            <div className="rounded-2xl border border-border bg-card p-7 sm:p-9 shadow-sm flex flex-col">
+      {/* ============================================================ */}
+      {/*  PRE-APPROVED ADU PLANS                                       */}
+      {/* ============================================================ */}
+      <section className="py-24 lg:py-32 bg-card">
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+          <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-center">
+            <div className="lg:w-1/2 mb-10 lg:mb-0">
               <p className="font-body text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-                Education, Not Lenders
+                Faster Path to Permits
               </p>
-              <h2 className="font-display text-[clamp(22px,3vw,32px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
-                ADU Financing
+              <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+                Pre-Approved ADU Plans
               </h2>
-              <p className="font-body text-sm sm:text-base leading-relaxed text-muted-foreground mb-6">
-                Many homeowners use financing to help make their ADU project possible, with common options including a <strong className="text-foreground">HELOC</strong>, <strong className="text-foreground">cash-out refinance</strong>, <strong className="text-foreground">construction loan</strong>, or <strong className="text-foreground">personal savings</strong>. The right path depends on your available equity, financial goals, and lender qualifications.
+              <p className="font-body text-base sm:text-lg leading-relaxed text-muted-foreground mb-8">
+                In some cases, cities offer pre-approved ADU plans that can reduce design time, lower costs, and speed up approvals.
               </p>
-              <div className="grid grid-cols-2 gap-3 mb-8 flex-1">
+              <p className="font-body text-sm font-semibold text-foreground mb-4">We help determine:</p>
+              <ul className="space-y-3 mb-8">
                 {[
-                  { label: "HELOC", desc: "Borrow against your existing home equity", icon: Home },
-                  { label: "Cash-Out Refi", desc: "Replace your mortgage and pull out equity", icon: DollarSign },
-                  { label: "Construction Loan", desc: "Short-term financing for the build", icon: Hammer },
-                  { label: "Personal Savings", desc: "Fund the project without debt", icon: ShieldCheck },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.label} className="rounded-xl border border-border bg-background p-4 hover:shadow-sm transition-shadow duration-200">
-                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                        <Icon className="w-4.5 h-4.5 text-primary" />
-                      </div>
-                      <p className="font-body text-sm font-semibold text-foreground leading-tight mb-1">{item.label}</p>
-                      <p className="font-body text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                  "If your property qualifies for pre-approved plans",
+                  "Whether custom or pre-approved makes sense based on your goals",
+                  "How to move through permits efficiently",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <span className="font-body text-sm sm:text-base text-muted-foreground">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button variant="hero" size="hero" className="w-full sm:w-auto" onClick={() => scrollToSection("adu-guide")}>
+                See If My Property Qualifies for a Pre-Approved ADU
+              </Button>
+            </div>
+
+            <div className="lg:w-1/2">
+              <div className="rounded-2xl border border-border bg-background p-6 sm:p-8 shadow-sm">
+                <p className="font-body text-xs font-semibold uppercase tracking-widest text-primary mb-4">
+                  Participating Cities
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    "San Diego County",
+                    "City of San Diego",
+                    "Encinitas",
+                    "Chula Vista",
+                    "Del Mar",
+                    "Escondido",
+                    "San Marcos",
+                    "La Mesa",
+                    "El Cajon",
+                    "Carlsbad",
+                    "Imperial Beach",
+                    "& More",
+                  ].map((city) => (
+                    <div
+                      key={city}
+                      className="rounded-xl border border-border bg-card px-4 py-3 text-center hover:shadow-sm transition-shadow duration-200"
+                    >
+                      <p className="font-body text-sm font-medium text-foreground">{city}</p>
                     </div>
-                  );
-                })}
-              </div>
-              <p className="font-body text-sm font-semibold uppercase tracking-widest text-accent mb-6">
-                Free financing guidance
-              </p>
-              <div className="flex items-center gap-5 rounded-xl border border-border bg-background p-5">
-                <img
-                  src={raulGarciaImg}
-                  alt="Raul Garcia, partnered lender"
-                  className="w-16 h-16 rounded-full object-cover object-top border-2 border-border shadow-md"
-                />
-                <div>
-                  <p className="font-display text-lg font-semibold text-foreground">Raul Garcia</p>
-                  <p className="font-body text-sm text-muted-foreground">Partnered Lender &middot; NMLS #1205424</p>
+                  ))}
                 </div>
+                <p className="font-body text-xs text-muted-foreground mt-4 leading-relaxed">
+                  Pre-approved plans can reduce design time and lower costs by offering blueprints that are up to 85% complete and already meet city requirements.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ============================================================ */}
+      {/*  Types of ADUs                                                */}
+      {/* ============================================================ */}
+      <AduTypesSection />
 
       {/* ============================================================ */}
       {/*  SECTION 6 — ADU Development Path                            */}
@@ -892,6 +1088,73 @@ const FixDevelop = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/*  ADU Financing                                                */}
+      {/* ============================================================ */}
+      <section className="py-24 lg:py-32 bg-background">
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+          <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-center">
+            <div className="lg:w-1/2 mb-10 lg:mb-0">
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-primary mb-3">
+                Education, Not Lenders
+              </p>
+              <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+                ADU Financing
+              </h2>
+              <p className="font-body text-base sm:text-lg leading-relaxed text-muted-foreground mb-8">
+                Many homeowners use financing to help make their ADU project possible, with common options including a <strong className="text-foreground">HELOC</strong>, <strong className="text-foreground">cash-out refinance</strong>, <strong className="text-foreground">construction loan</strong>, or <strong className="text-foreground">personal savings</strong>. The right path depends on your available equity, financial goals, and lender qualifications.
+              </p>
+              <div className="grid grid-cols-2 gap-3 mb-8">
+                {[
+                  { label: "HELOC", desc: "Borrow against your existing home equity", icon: Home },
+                  { label: "Cash-Out Refi", desc: "Replace your mortgage and pull out equity", icon: DollarSign },
+                  { label: "Construction Loan", desc: "Short-term financing for the build", icon: Hammer },
+                  { label: "Personal Savings", desc: "Fund the project without debt", icon: ShieldCheck },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow duration-200">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                        <Icon className="w-4.5 h-4.5 text-primary" />
+                      </div>
+                      <p className="font-body text-sm font-semibold text-foreground leading-tight mb-1">{item.label}</p>
+                      <p className="font-body text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="lg:w-1/2">
+              <div className="rounded-2xl border border-border bg-card p-7 sm:p-9 shadow-sm">
+                <p className="font-body text-sm font-semibold uppercase tracking-widest text-accent mb-6">
+                  Free financing guidance
+                </p>
+                <div className="flex items-center gap-5 rounded-xl border border-border bg-background p-5 mb-6">
+                  <img
+                    src={raulGarciaImg}
+                    alt="Raul Garcia, partnered lender"
+                    className="w-16 h-16 rounded-full object-cover object-top border-2 border-border shadow-md"
+                  />
+                  <div>
+                    <p className="font-display text-lg font-semibold text-foreground">Raul Garcia</p>
+                    <p className="font-body text-sm text-muted-foreground">Partnered Lender &middot; NMLS #1205424</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {["Budget clarity before building", "Financing options matched to your situation", "Stronger position with contractors"].map((item) => (
+                    <div key={item} className="flex items-center gap-3">
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                      <span className="font-body text-sm text-muted-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -986,7 +1249,7 @@ const FixDevelop = () => {
       {/* ============================================================ */}
 
       {/* CV-1 — Hero with form */}
-      <section id="code-violations" className="relative py-24 lg:py-32 overflow-hidden">
+      <section className="relative py-24 lg:py-32 overflow-hidden">
         {/* Background video */}
         <video
           autoPlay
@@ -1001,7 +1264,7 @@ const FixDevelop = () => {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
           <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-center">
             {/* Left — copy */}
-            <div className="max-w-lg mb-10 lg:mb-0 lg:flex-1">
+            <div id="code-violations" className="max-w-lg mb-10 lg:mb-0 lg:flex-1">
               {/* Eyebrow */}
               <div className="flex items-center gap-2 mb-5">
                 <AlertTriangle className="w-5 h-5 text-accent" />
@@ -1039,8 +1302,8 @@ const FixDevelop = () => {
       <section className="py-20 lg:py-28 bg-card">
         <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
           <div className="max-w-3xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+            <div className="animate-warning-pulse inline-flex items-center gap-3 mb-4 rounded-full bg-destructive/10 pl-2 pr-5 py-2">
+              <div className="w-10 h-10 rounded-full bg-destructive/15 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-destructive" />
               </div>
               <p className="font-body text-xs font-semibold uppercase tracking-widest text-destructive">Warning</p>
@@ -1121,29 +1384,29 @@ const FixDevelop = () => {
       </section>
 
       {/* CV-4 — Can Your Property Be Brought Into Compliance? + Property Review Form */}
-      <section className="py-20 lg:py-28 bg-card">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <div className="flex flex-col lg:flex-row lg:gap-16">
-            <div className="max-w-xl mb-12 lg:mb-0 lg:flex-1">
-              <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+      <section id="cv-property-review" className="py-24 lg:py-32 relative" style={{ background: "var(--hero-gradient)" }}>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+          <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-start">
+            <div className="max-w-md mb-10 lg:mb-0 lg:flex-shrink-0 lg:sticky lg:top-28">
+              <h2 className="font-display text-[clamp(22px,3.5vw,36px)] font-bold leading-[1.15] tracking-display text-white mb-5">
                 Can Your Property Be Brought Into Compliance?
               </h2>
-              <p className="font-body text-base sm:text-lg leading-relaxed text-muted-foreground">
-                Every property situation is different. Before deciding whether to fix a violation or sell the property, several factors should be reviewed, including zoning regulations, permit history, the scope of unpermitted work, structural requirements, and whether the repair cost makes sense compared to the property value. Looking at these factors helps determine the most practical path forward.
+              <p className="font-body text-hero-sub leading-relaxed text-white/75">
+                Every property situation is different. Before deciding whether to fix a violation or sell the property, several factors should be reviewed. Looking at these factors helps determine the most practical path forward.
               </p>
             </div>
 
             {/* Property Review form */}
             <div className="flex-1 w-full max-w-lg">
               {propertyReviewSubmitted ? (
-                <div className="rounded-xl border border-border bg-background p-8 text-center">
-                  <h3 className="font-display text-2xl font-semibold text-foreground mb-3">We'll Be in Touch</h3>
-                  <p className="font-body text-muted-foreground">We're reviewing your property details and will reach out with possible next steps.</p>
+                <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm p-8 text-center">
+                  <h3 className="font-display text-2xl font-semibold text-white mb-3">We'll Be in Touch</h3>
+                  <p className="font-body text-white/75">We're reviewing your property details and will reach out with possible next steps.</p>
                 </div>
               ) : (
-                <div className="rounded-xl border border-border bg-background p-6 sm:p-8">
-                  <p className="font-body text-xs font-semibold uppercase tracking-widest text-primary mb-1">Property Review</p>
-                  <p className="font-body text-sm text-muted-foreground mb-6">
+                <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm p-6 sm:p-8">
+                  <p className="font-body text-xs font-semibold uppercase tracking-widest text-white/60 mb-1">Property Review</p>
+                  <p className="font-body text-sm text-white/60 mb-6">
                     If you are unsure how serious the violation may be, send us the property details and we will help identify possible next steps.
                   </p>
                   <Form {...propertyReviewForm}>
@@ -1153,29 +1416,29 @@ const FixDevelop = () => {
                     >
                       <FormField control={propertyReviewForm.control} name="name" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-body">Name</FormLabel>
-                          <FormControl><Input placeholder="Your full name" className="min-h-[48px]" {...field} /></FormControl>
+                          <FormLabel className="font-body text-white">Name</FormLabel>
+                          <FormControl><Input placeholder="Your full name" className="min-h-[48px] bg-white/90 text-foreground border-white/30" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={propertyReviewForm.control} name="email" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-body">Email</FormLabel>
-                          <FormControl><Input type="email" placeholder="you@example.com" className="min-h-[48px]" {...field} /></FormControl>
+                          <FormLabel className="font-body text-white">Email</FormLabel>
+                          <FormControl><Input type="email" placeholder="you@example.com" className="min-h-[48px] bg-white/90 text-foreground border-white/30" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={propertyReviewForm.control} name="address" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-body">Property Address</FormLabel>
-                          <FormControl><Input placeholder="123 Main St, City, CA" className="min-h-[48px]" {...field} /></FormControl>
+                          <FormLabel className="font-body text-white">Property Address</FormLabel>
+                          <FormControl><Input placeholder="123 Main St, City, CA" className="min-h-[48px] bg-white/90 text-foreground border-white/30" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={propertyReviewForm.control} name="phone" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-body">Phone <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                          <FormControl><Input type="tel" placeholder="(555) 123-4567" className="min-h-[48px]" {...field} /></FormControl>
+                          <FormLabel className="font-body text-white">Phone <span className="text-white/50 font-normal">(optional)</span></FormLabel>
+                          <FormControl><Input type="tel" placeholder="(555) 123-4567" className="min-h-[48px] bg-white/90 text-foreground border-white/30" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
@@ -1294,9 +1557,56 @@ const FixDevelop = () => {
       {/* (Share buttons removed) */}
 
       {/* ============================================================ */}
-      {/*  CASE STUDY HIGHLIGHTS                                        */}
+      {/*  REAL PROPERTIES. REAL OUTCOMES.                               */}
       {/* ============================================================ */}
-      <CaseStudyHighlights config={fixDevelopCaseStudyConfig} />
+      <section id="case-studies" className="bg-card">
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-24 lg:pt-32 pb-8">
+          <div className="max-w-xl">
+            <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-4">
+              Real Properties. Real Outcomes.
+            </h2>
+            <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
+              Here's how owners in similar situations moved forward with a clear plan.
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+            {fixDevCaseStudies.map((study, i) => (
+              <FixDevCaseCard
+                key={study.title}
+                study={study}
+                index={i}
+                onClick={() => setFixDevLightboxIdx(i)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-14 lg:py-16 text-center">
+          <h3 className="font-display text-[clamp(20px,3vw,30px)] font-bold text-foreground mb-5">
+            Need a clear plan for your property?
+          </h3>
+          <Button
+            variant="default"
+            size="hero"
+            onClick={() => scrollToSection("cv-property-review")}
+            className="bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            Talk Through Your Situation
+          </Button>
+        </div>
+
+        {fixDevLightboxIdx !== null && (
+          <FixDevLightbox
+            studies={fixDevCaseStudies}
+            currentIndex={fixDevLightboxIdx}
+            onClose={() => setFixDevLightboxIdx(null)}
+            onNav={(i) => setFixDevLightboxIdx(i)}
+          />
+        )}
+      </section>
 
       {/* CV-7 — FAQ */}
       <section className="py-20 lg:py-28 bg-background">
@@ -1339,7 +1649,7 @@ const FixDevelop = () => {
             <Button
               variant="hero"
               size="hero"
-              onClick={() => { window.location.href = "/#strategy-call"; }}
+              onClick={() => scrollToSection("cv-property-review")}
             >
               Schedule a Strategy Call
             </Button>

@@ -47,7 +47,7 @@ const SiteHeader = () => {
           onClick={() => setOpen(false)}
         >
           <img src={logoBlack} alt="Unlock Your Property" className="h-7 sm:h-9 w-auto object-contain" />
-          <span className="font-body text-[8px] sm:text-[9px] uppercase tracking-[0.1em] text-muted-foreground ml-1">Powered by Coast 2 Coast Realty</span>
+          <span className="font-body text-[8px] sm:text-[9px] uppercase tracking-[0.1em] text-muted-foreground ml-1">Powered by Coast 2 Coast Real Estate Investments</span>
         </Link>
 
         {/* Desktop nav */}

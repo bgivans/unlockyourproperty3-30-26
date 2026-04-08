@@ -42,3 +42,14 @@ export type StrategyCallValues = z.infer<typeof strategyCallSchema>;
 // Alias used in RealEstateMoves inline review form
 export const reviewFormSchema = strategyCallSchema;
 export type ReviewFormValues = StrategyCallValues;
+
+// ── Probate page form ─────────────────────────────────────────────
+export const probateFormSchema = z.object({
+  name: nameField,
+  phone: phoneRequired,
+  email: emailField,
+  address: addressField,
+  probateStage: z.string().min(1, "Please select a probate stage"),
+  notes: z.string().trim().max(DESCRIPTION_MAX).optional().or(z.literal("")),
+});
+export type ProbateFormValues = z.infer<typeof probateFormSchema>;

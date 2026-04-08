@@ -71,7 +71,7 @@ const About = () => {
             <div className="w-full lg:w-1/2 mb-8 lg:mb-0 rounded-2xl overflow-hidden shadow-lg">
               <img
                 src={heroImg}
-                alt="Coast 2 Coast Realty team at a company event"
+                alt="Coast 2 Coast Real Estate Investments team at a company event"
                 className="w-full h-64 sm:h-80 lg:h-[480px] object-cover"
                 loading="eager"
               />
@@ -85,7 +85,7 @@ const About = () => {
                 Real estate strategy for complex property situations.
               </p>
               <p className="font-body text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
-                Unlock Your Property is a strategy-first service powered by Coast 2 Coast Realty.
+                Unlock Your Property is a strategy-first service powered by Coast 2 Coast Real Estate Investments.
               </p>
               <p className="font-body text-base sm:text-lg leading-relaxed text-muted-foreground mb-8 max-w-xl">
                 Unlock Your Property helps homeowners, families, buyers, and trustees make smart real estate decisions when the situation is not simple. Whether you are dealing with an inherited home, permit issues, code violations, ADU potential, or the decision to keep, improve, or sell — we help you understand your options and move forward with a clear strategy.
@@ -240,34 +240,17 @@ const About = () => {
               </p>
               <div className="space-y-1.5 border-t border-border pt-6 mt-6">
                 <p className="font-body text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Unlock Your Property is a strategy-first service powered by Coast 2 Coast Realty.
+                  Unlock Your Property is a strategy-first service powered by Coast 2 Coast Real Estate Investments.
                 </p>
                 <p className="font-body text-sm font-medium text-foreground">CA DRE #02125445</p>
-                <p className="font-body text-sm text-muted-foreground">Licensed under Coast 2 Coast Realty, DRE #02193707</p>
+                <p className="font-body text-sm text-muted-foreground">Licensed under Coast 2 Coast Real Estate Investments, DRE #02193707</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Section 7: Service Area ── */}
-      <section className="bg-background">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-16 lg:py-24">
-          <div className="max-w-3xl mx-auto text-center lg:text-left lg:mx-0">
-            <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
-              <MapPin className="w-6 h-6 text-primary" />
-              <h2 className="font-display text-[clamp(26px,4vw,40px)] font-bold leading-[1.15] tracking-tight text-foreground">
-                Serving Southern California
-              </h2>
-            </div>
-            <p className="font-body text-base sm:text-lg leading-relaxed text-muted-foreground">
-              Unlock Your Property works with clients throughout Southern California, including San Diego County, Riverside County, San Bernardino County, and Orange County. We understand the local market, regional property challenges, and the kinds of opportunities that can make a big difference in outcome.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Section 8: CTA ── */}
+      {/* ── Section 7: CTA ── */}
       <section className="bg-primary">
         <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-16 lg:py-20 text-center">
           <h2 className="font-display text-[clamp(26px,4vw,40px)] font-bold leading-[1.15] tracking-tight text-primary-foreground mb-4">
@@ -287,14 +270,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* ── Section 9: Disclaimer ── */}
-      <section className="bg-card border-t border-border">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-8">
-          <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-4xl mx-auto text-center">
-            Unlock Your Property provides real estate consulting, development guidance, and building design and permit documentation services through employed or contracted designers. We do not provide legal, tax, architectural, or engineering services. Brokerage services, when applicable, are handled separately through the licensed brokerage entity Coast 2 Coast Realty, DRE #02193707.
-          </p>
-        </div>
-      </section>
     </>
   );
 };

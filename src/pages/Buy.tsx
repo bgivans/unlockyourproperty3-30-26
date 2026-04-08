@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
+import { caseStudies, type CaseStudy } from "@/data/caseStudies";
 import buyingTurnkeyImg from "@/assets/buying-turnkey.jpg";
 import raulGarciaImg from "@/assets/raul-garcia.jpg";
 import buyingFixerImg from "@/assets/buying-fixer.jpg";
@@ -47,6 +48,9 @@ import {
   Hammer,
   HardHat,
   Building,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { NAME_MAX, EMAIL_MAX, PHONE_MAX } from "@/constants";
 
@@ -148,6 +152,208 @@ const howItWorks = [
   },
 ];
 
+/* ------------------------------------------------------------------ */
+/*  Buy Page Case Studies (filtered from master list)                   */
+/* ------------------------------------------------------------------ */
+const buyStudyTitles = [
+  "Triplex Investment — Inland Empire",
+  "4-Unit Portfolio Builder — Passive Income",
+  "Family Upsize — $60K Negotiated Savings",
+  "Out-of-State Relocation — New Construction",
+];
+const buyCaseStudies = buyStudyTitles
+  .map((t) => caseStudies.find((s) => s.title === t)!)
+  .filter(Boolean);
+
+/* ------------------------------------------------------------------ */
+/*  Case Card (matches homepage design)                                */
+/* ------------------------------------------------------------------ */
+const BuyCaseCard = ({ study, index, onClick }: { study: CaseStudy; index: number; onClick: () => void }) => {
+  const images = study.images && study.images.length > 1 ? study.images : [study.image];
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    if (images.length < 2) return;
+    const timer = setInterval(() => setActiveIdx((i) => (i + 1) % images.length), 5000);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <div
+      onClick={onClick}
+      className="group rounded-xl border border-border bg-background overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer h-full flex flex-col"
+    >
+      <div className="relative w-full aspect-[16/10] overflow-hidden bg-muted">
+        {images.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt={study.imageAlt}
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 pointer-events-none"
+            style={{ opacity: i === activeIdx ? 1 : 0 }}
+          />
+        ))}
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setActiveIdx(i); }}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeIdx ? "bg-white" : "bg-white/40"}`}
+                aria-label={`Image ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="px-4 py-3.5 flex flex-col flex-1 gap-2">
+        <div>
+          <span className="font-body text-[10px] font-semibold tracking-[0.18em] uppercase text-primary/60 block">
+            Case Study {index + 1}
+          </span>
+          <h3 className="font-display text-sm sm:text-base font-bold text-foreground leading-tight mt-0.5">
+            {study.title}
+          </h3>
+          {(study.address || study.price) && (
+            <div className="flex flex-wrap gap-x-2 mt-0.5">
+              {study.address && <span className="font-body text-[11px] text-muted-foreground">{study.address}</span>}
+              {study.price && <span className="font-body text-[11px] font-semibold text-primary">{study.price}</span>}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2 flex-1 text-[13px] leading-snug">
+          <div>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-accent block">Problem</span>
+            <p className="font-body text-muted-foreground">{study.problem}</p>
+          </div>
+          <div>
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">What We Did</span>
+            <p className="font-body text-muted-foreground">{study.whatWeDid}</p>
+          </div>
+          <div className="bg-primary/5 border-l-2 border-primary rounded-r px-2 py-1.5">
+            <span className="font-body text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block">Outcome</span>
+            <p className="font-body font-medium text-foreground">{study.outcome}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-1 pt-2 border-t border-border">
+          {study.badges.map((badge) => (
+            <span key={badge} className="font-body text-[10px] font-medium tracking-wide text-primary bg-primary/8 rounded-full px-2 py-0.5">
+              {badge}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  Lightbox (matches homepage design)                                 */
+/* ------------------------------------------------------------------ */
+const BuyLightbox = ({
+  studies,
+  currentIndex,
+  onClose,
+  onNav,
+}: {
+  studies: CaseStudy[];
+  currentIndex: number;
+  onClose: () => void;
+  onNav: (index: number) => void;
+}) => {
+  const study = studies[currentIndex];
+  const images = study.images && study.images.length > 1 ? study.images : [study.image];
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  useEffect(() => { setActiveImgIdx(0); }, [currentIndex]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && currentIndex > 0) onNav(currentIndex - 1);
+      if (e.key === "ArrowRight" && currentIndex < studies.length - 1) onNav(currentIndex + 1);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [currentIndex, studies.length, onClose, onNav]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <button onClick={onClose} className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Close">
+        <X className="w-5 h-5" />
+      </button>
+      {currentIndex > 0 && (
+        <button onClick={() => onNav(currentIndex - 1)} className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Previous">
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      )}
+      {currentIndex < studies.length - 1 && (
+        <button onClick={() => onNav(currentIndex + 1)} className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Next">
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      )}
+
+      <div className="relative z-40 w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-background border border-border shadow-2xl mx-4">
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-muted">
+          {images.map((src, i) => (
+            <img key={i} src={src} alt={study.imageAlt} draggable={false} className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500" style={{ opacity: i === activeImgIdx ? 1 : 0 }} />
+          ))}
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+              {images.map((_, i) => (
+                <button key={i} onClick={() => setActiveImgIdx(i)} className={`w-2 h-2 rounded-full transition-colors ${i === activeImgIdx ? "bg-white" : "bg-white/40"}`} aria-label={`Image ${i + 1}`} />
+              ))}
+            </div>
+          )}
+          <div className="absolute top-3 left-3 bg-black/50 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+            {currentIndex + 1} / {studies.length}
+          </div>
+        </div>
+
+        <div className="p-5 sm:p-7">
+          <span className="font-body text-[10px] font-semibold tracking-[0.18em] uppercase text-primary/60 block">Case Study {currentIndex + 1}</span>
+          <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight mt-1 mb-1">{study.title}</h3>
+          {(study.address || study.price) && (
+            <div className="flex flex-wrap gap-x-3 mb-4">
+              {study.address && <span className="font-body text-sm text-muted-foreground">{study.address}</span>}
+              {study.price && <span className="font-body text-sm font-semibold text-primary">{study.price}</span>}
+            </div>
+          )}
+          <div className="space-y-4 text-sm sm:text-base">
+            <div>
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-accent block mb-1">Problem</span>
+              <p className="font-body text-muted-foreground leading-relaxed">{study.problem}</p>
+            </div>
+            <div>
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-primary block mb-1">What We Did</span>
+              <p className="font-body text-muted-foreground leading-relaxed">{study.whatWeDid}</p>
+            </div>
+            <div className="bg-primary/5 border-l-2 border-primary rounded-r px-4 py-3">
+              <span className="font-body text-xs font-semibold tracking-[0.12em] uppercase text-primary block mb-1">Outcome</span>
+              <p className="font-body font-medium text-foreground leading-relaxed">{study.outcome}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-border">
+            {study.badges.map((badge) => (
+              <span key={badge} className="font-body text-xs font-medium tracking-wide text-primary bg-primary/8 rounded-full px-3 py-1">{badge}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const faqs = [
   {
     q: "Do I need to be pre-approved before looking at homes?",
@@ -168,6 +374,7 @@ const faqs = [
 /* ------------------------------------------------------------------ */
 const Buy = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const form = useForm<BuyerFormValues>({
     resolver: zodResolver(buyerFormSchema),
@@ -253,181 +460,9 @@ const Buy = () => {
       </section>
 
       {/* ============================================================ */}
-      {/*  WHO THIS IS FOR                                              */}
-      {/* ============================================================ */}
-      <section className="py-24 lg:py-32 bg-background">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          {/* Header */}
-          <div className="max-w-2xl mx-auto text-center mb-14 lg:mb-20">
-            <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
-              Who This Is For
-            </h2>
-            <p className="font-body text-lg sm:text-xl leading-relaxed text-muted-foreground">
-              Whether you&rsquo;re buying your first home or adding to your portfolio, we help you find the right property and navigate the process with confidence.
-            </p>
-          </div>
-
-          {/* Cards — 2x2 grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 lg:gap-6 max-w-4xl mx-auto">
-            {whoThisIsFor.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.title}
-                  className="group rounded-2xl border border-border bg-card p-7 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300"
-                >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-5 group-hover:bg-primary/15 transition-colors duration-300">
-                    <Icon className="w-5.5 h-5.5 text-primary" />
-                  </div>
-                  <h3 className="font-display text-lg sm:text-xl font-semibold text-foreground mb-3 leading-snug">
-                    {item.title}
-                  </h3>
-                  <p className="font-body text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    {item.body}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* CTA */}
-          <div className="mt-14 lg:mt-20 text-center">
-            <Button variant="outline" size="lg" onClick={() => scrollToSection("buyer-form")}>
-              Start Your Search
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/*  YOUR PROPERTY OPTIONS                                        */}
-      {/* ============================================================ */}
-      <section id="property-options" className="py-24 lg:py-32 bg-card">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <div className="max-w-2xl mx-auto text-center mb-14 lg:mb-20">
-            <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
-              Your Property Options
-            </h2>
-            <p className="font-body text-lg sm:text-xl leading-relaxed text-muted-foreground">
-              Every buyer&rsquo;s situation is different, but most are considering one of these paths:
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
-            {buyingOptions.map((opt) => {
-              const Icon = opt.icon;
-              return (
-                <div
-                  key={opt.title}
-                  className="group relative rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
-                >
-                  {/* Image */}
-                  <div className="relative h-44 sm:h-48 overflow-hidden">
-                    <img
-                      src={opt.image}
-                      alt=""
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
-                    <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-card/90 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary border border-border/60">
-                      <Icon className="h-3.5 w-3.5" />
-                      {opt.label}
-                    </span>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-6 sm:p-7">
-                    <h3 className="font-display text-lg sm:text-xl font-semibold text-foreground mb-3 leading-snug">
-                      {opt.title}
-                    </h3>
-                    <p className="font-body text-sm sm:text-base text-muted-foreground leading-relaxed">
-                      {opt.body}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/*  UNDERSTANDING YOUR BUYING POWER                              */}
-      {/* ============================================================ */}
-      <section className="py-24 lg:py-32 bg-background">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-center">
-            <div className="lg:w-1/2 mb-10 lg:mb-0">
-              <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
-                Understanding Your Buying Power
-              </h2>
-              <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
-                We connect buyers with trusted lenders to determine budget and financing options before starting the search.
-              </p>
-            </div>
-            <div className="lg:w-1/2">
-              <div className="rounded-2xl border border-border bg-background p-8 sm:p-10 shadow-sm">
-                <div className="flex items-center gap-4 mb-6">
-                  <img
-                    src={raulGarciaImg}
-                    alt="Raul Garcia, partnered lender"
-                    className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
-                  />
-                  <div>
-                    <p className="font-display text-lg font-semibold text-foreground">Raul Garcia</p>
-                    <p className="font-body text-sm text-muted-foreground">Partnered Lender &middot; NMLS #1205424</p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {["Budget clarity before touring", "Financing options matched to your situation", "Stronger negotiating position"].map((item) => (
-                    <div key={item} className="flex items-center gap-3">
-                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-                      <span className="font-body text-sm text-muted-foreground">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/*  HOW IT WORKS                                                 */}
-      {/* ============================================================ */}
-      <section className="py-24 lg:py-32 bg-background">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-10 lg:mb-14 text-center">
-            How It Works
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-5">
-            {howItWorks.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.step} className="relative rounded-2xl border border-border bg-card p-7 sm:p-8 text-center shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-display text-sm font-bold shadow-md">
-                    {item.step}
-                  </span>
-                  <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto mt-2 mb-5">
-                    <Icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="font-body text-sm text-muted-foreground leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
       {/*  START YOUR PROPERTY SEARCH — FORM                            */}
       {/* ============================================================ */}
-      <section id="buyer-form" className="scroll-mt-20 py-24 lg:py-32 relative" style={{ background: "var(--hero-gradient)" }}>
+      <section id="buyer-form" className="py-24 lg:py-32 relative" style={{ background: "var(--hero-gradient)" }}>
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
           <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-start">
             {/* Left copy */}
@@ -437,6 +472,9 @@ const Buy = () => {
               </h2>
               <p className="font-body text-hero-sub leading-relaxed text-white/75">
                 Tell us what you're looking for and we'll help you identify the right opportunities.
+              </p>
+              <p className="font-body text-sm text-white/60 mt-4">
+                Call or text for a quicker response: <a href="tel:+17604058488" className="underline text-white/80 hover:text-white">760-405-8488</a>
               </p>
             </div>
 
@@ -557,14 +595,238 @@ const Buy = () => {
       </section>
 
       {/* ============================================================ */}
+      {/*  WHO THIS IS FOR                                              */}
+      {/* ============================================================ */}
+      <section className="py-24 lg:py-32 bg-background">
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+          {/* Header */}
+          <div className="max-w-2xl mx-auto text-center mb-14 lg:mb-20">
+            <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+              Who This Is For
+            </h2>
+            <p className="font-body text-lg sm:text-xl leading-relaxed text-muted-foreground">
+              Whether you&rsquo;re buying your first home or adding to your portfolio, we help you find the right property and navigate the process with confidence.
+            </p>
+          </div>
+
+          {/* Cards — 2x2 grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 lg:gap-6 max-w-4xl mx-auto">
+            {whoThisIsFor.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.title}
+                  className="group rounded-2xl border border-border bg-card p-7 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-5 group-hover:bg-primary/15 transition-colors duration-300">
+                    <Icon className="w-5.5 h-5.5 text-primary" />
+                  </div>
+                  <h3 className="font-display text-lg sm:text-xl font-semibold text-foreground mb-3 leading-snug">
+                    {item.title}
+                  </h3>
+                  <p className="font-body text-sm sm:text-base text-muted-foreground leading-relaxed">
+                    {item.body}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* CTA */}
+          <div className="mt-14 lg:mt-20 text-center">
+            <Button variant="outline" size="lg" onClick={() => scrollToSection("buyer-form")}>
+              Start Your Search
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/*  UNDERSTANDING YOUR BUYING POWER                              */}
+      {/* ============================================================ */}
+      <section className="py-24 lg:py-32 bg-background">
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+          <div className="flex flex-col lg:flex-row lg:gap-16 lg:items-center">
+            <div className="lg:w-1/2 mb-10 lg:mb-0">
+              <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+                Understanding Your Buying Power
+              </h2>
+              <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
+                We connect buyers with trusted lenders to determine budget and financing options before starting the search.
+              </p>
+            </div>
+            <div className="lg:w-1/2">
+              <div className="rounded-2xl border border-border bg-background p-8 sm:p-10 shadow-sm">
+                <div className="flex items-center gap-4 mb-6">
+                  <img
+                    src={raulGarciaImg}
+                    alt="Raul Garcia, partnered lender"
+                    className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
+                  />
+                  <div>
+                    <p className="font-display text-lg font-semibold text-foreground">Raul Garcia</p>
+                    <p className="font-body text-sm text-muted-foreground">Partnered Lender &middot; NMLS #1205424</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {["Budget clarity before touring", "Financing options matched to your situation", "Stronger negotiating position"].map((item) => (
+                    <div key={item} className="flex items-center gap-3">
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                      <span className="font-body text-sm text-muted-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/*  HOW IT WORKS                                                 */}
+      {/* ============================================================ */}
+      <section className="py-24 lg:py-32 bg-background">
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+          <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-10 lg:mb-14 text-center">
+            How It Works
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-5">
+            {howItWorks.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.step} className="relative rounded-2xl border border-border bg-card p-7 sm:p-8 text-center shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-display text-sm font-bold shadow-md">
+                    {item.step}
+                  </span>
+                  <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto mt-2 mb-5">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/*  YOUR PROPERTY OPTIONS                                        */}
+      {/* ============================================================ */}
+      <section id="property-options" className="py-24 lg:py-32 bg-card">
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+          <div className="max-w-2xl mx-auto text-center mb-14 lg:mb-20">
+            <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-5">
+              Your Property Options
+            </h2>
+            <p className="font-body text-lg sm:text-xl leading-relaxed text-muted-foreground">
+              Every buyer&rsquo;s situation is different, but most are considering one of these paths:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
+            {buyingOptions.map((opt) => {
+              const Icon = opt.icon;
+              return (
+                <div
+                  key={opt.title}
+                  className="group relative rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
+                >
+                  {/* Image */}
+                  <div className="relative h-44 sm:h-48 overflow-hidden">
+                    <img
+                      src={opt.image}
+                      alt=""
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+                    <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-card/90 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary border border-border/60">
+                      <Icon className="h-3.5 w-3.5" />
+                      {opt.label}
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6 sm:p-7">
+                    <h3 className="font-display text-lg sm:text-xl font-semibold text-foreground mb-3 leading-snug">
+                      {opt.title}
+                    </h3>
+                    <p className="font-body text-sm sm:text-base text-muted-foreground leading-relaxed">
+                      {opt.body}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/*  REAL PROPERTIES. REAL OUTCOMES.                               */}
+      {/* ============================================================ */}
+      <section id="case-studies" className="bg-card">
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-24 lg:pt-32 pb-8">
+          <div className="max-w-xl">
+            <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-4">
+              Real Properties. Real Outcomes.
+            </h2>
+            <p className="font-body text-hero-sub leading-relaxed text-muted-foreground">
+              See how we helped buyers find the right property and close with confidence.
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+            {buyCaseStudies.map((study, i) => (
+              <BuyCaseCard
+                key={study.title}
+                study={study}
+                index={i}
+                onClick={() => setLightboxIdx(i)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-14 lg:py-16 text-center">
+          <h3 className="font-display text-[clamp(20px,3vw,30px)] font-bold text-foreground mb-5">
+            Ready to find the right property?
+          </h3>
+          <Button
+            variant="default"
+            size="hero"
+            onClick={() => scrollToSection("buyer-form")}
+            className="bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            Start Your Property Search
+          </Button>
+        </div>
+
+        {lightboxIdx !== null && (
+          <BuyLightbox
+            studies={buyCaseStudies}
+            currentIndex={lightboxIdx}
+            onClose={() => setLightboxIdx(null)}
+            onNav={(i) => setLightboxIdx(i)}
+          />
+        )}
+      </section>
+
+      {/* ============================================================ */}
       {/*  COMMON QUESTIONS                                              */}
       {/* ============================================================ */}
       <section className="py-24 lg:py-32 bg-background">
         <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-10 lg:mb-14 max-w-xl">
+          <h2 className="font-display text-[clamp(26px,4vw,44px)] font-bold leading-[1.15] tracking-display text-foreground mb-10 lg:mb-14 text-center">
             Common Questions
           </h2>
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto">
             <Accordion type="single" collapsible className="space-y-3">
               {faqs.map((faq, i) => (
                 <AccordionItem
@@ -607,16 +869,6 @@ const Buy = () => {
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/*  DISCLAIMER                                                    */}
-      {/* ============================================================ */}
-      <div className="py-8 bg-muted">
-        <div className="w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-          <p className="font-body text-xs text-muted-foreground leading-relaxed">
-            Unlock Your Property provides real estate consulting, development guidance, and permit documentation services through employed or contracted designers. We do not provide legal, tax, architectural, or engineering services. Brokerage services, when applicable, are handled separately through the licensed brokerage entity Coast 2 Coast Realty, DRE #02193707.
-          </p>
-        </div>
-      </div>
     </main>
   );
 };

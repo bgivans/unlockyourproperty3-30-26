@@ -72,20 +72,66 @@
     font-family: var(--font-display);
   }
 
-  /* Offset anchored sections below sticky header */
-  [id="strategy-call"],
+  /* Offset anchored content sections below sticky header */
   [id="property-options"],
-  [id="property-review"],
   [id="inherited-probate"],
-  [id="traditional-sale"],
   [id="adu-feasibility"],
   [id="code-violations"],
-  [id="adu-guide"],
+  [id="case-studies"],
+  [id="how-we-help"],
+  [id="how-we-decide"],
+  [id="property-quiz"],
+  [id="why-build-adus"],
+  [id="selling-reasons"],
   [id="faqs"],
   [id="buying"],
-  [id="investors"] {
-    scroll-margin-top: 80px;
+  [id="investors"],
+  [id="faster-probate"] {
+    scroll-margin-top: 5rem;
   }
+
+  /* Form / CTA sections — scroll flush so they fill the viewport behind the header */
+  [id="strategy-call"],
+  [id="property-review"],
+  [id="cv-property-review"],
+  [id="adu-guide"],
+  [id="cv-strategy-call"],
+  [id="buyer-form"],
+  [id="probate-form"] {
+    scroll-margin-top: 0;
+  }
+}
+
+@keyframes warning-pulse {
+  0% {
+    transform: scale(1) rotate(0deg);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  12% {
+    transform: scale(1.08) rotate(0deg);
+  }
+  20% {
+    transform: scale(1.02) rotate(-4deg) translate3d(-2px, -1px, 0);
+  }
+  28% {
+    transform: scale(1.04) rotate(3deg) translate3d(2px, 1px, 0);
+  }
+  34% {
+    transform: scale(1.01) rotate(-2deg) translate3d(-1px, -1px, 0);
+  }
+  40% {
+    transform: scale(1) rotate(0deg) translate3d(0, 0, 0);
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-warning-pulse {
+  animation: warning-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  backface-visibility: hidden;
 }
 
 @layer utilities {
