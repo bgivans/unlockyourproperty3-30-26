@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
+import { submitForm } from "@/lib/submitForm";
 import { caseStudies, type CaseStudy } from "@/data/caseStudies";
 import buyingTurnkeyImg from "@/assets/buying-turnkey.jpg";
 import raulGarciaImg from "@/assets/raul-garcia.jpg";
@@ -391,14 +392,7 @@ const Buy = () => {
 
   const onSubmit = async (data: BuyerFormValues) => {
     try {
-      const endpoint = import.meta.env.VITE_FORMSPREE_STRATEGY_ENDPOINT as string | undefined;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ ...data, formType: "buyer-search" }),
-        });
-      }
+      await submitForm({ ...data, formType: "buyer-search" }, "Buyer Search");
       setSubmitted(true);
       toast.success("Thank you! We'll be in touch soon.");
     } catch {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { submitForm } from "@/lib/submitForm";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -86,14 +87,7 @@ const StrategyCallForm = ({
   const onSubmit = async (data: StrategyCallValues) => {
     setSubmitting(true);
     try {
-      const endpoint = import.meta.env.VITE_FORMSPREE_STRATEGY_ENDPOINT as string | undefined;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ ...data, _context: context }),
-        });
-      }
+      await submitForm({ ...data, _context: context }, "Strategy Call");
       setSubmitted(true);
       toast.success("Thank you! We'll be in touch soon.");
     } catch {

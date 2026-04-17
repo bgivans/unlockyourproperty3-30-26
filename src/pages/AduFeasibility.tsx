@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { submitForm } from "@/lib/submitForm";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
@@ -10,6 +11,7 @@ import aduConstructionImg from "@/assets/adu-construction-aerial.jpg";
 import aduFinishedImg from "@/assets/adu-finished.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -65,19 +67,12 @@ const AduFeasibility = () => {
 
   const form = useForm<LeadValues>({
     resolver: zodResolver(leadSchema),
-    defaultValues: { name: "", email: "", address: "" },
+    defaultValues: { name: "", email: "", phone: "", address: "", notes: "" },
   });
 
   const onSubmit = async (_d: LeadValues) => {
     try {
-      const endpoint = import.meta.env.VITE_FORMSPREE_STRATEGY_ENDPOINT as string | undefined;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(_d),
-        });
-      }
+      await submitForm(_d, "ADU Feasibility Guide Download");
       setSubmitted(true);
       toast.success("Your ADU guide is on the way!");
     } catch {
@@ -180,11 +175,31 @@ const AduFeasibility = () => {
                         <FormMessage />
                       </FormItem>
                     )} />
+                    <FormField control={form.control} name="phone" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-body text-white">Phone</FormLabel>
+                        <FormControl>
+                          <Input type="tel" placeholder="(555) 123-4567" className="min-h-[48px] bg-white/90 text-foreground border-white/30" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <FormField control={form.control} name="address" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-body text-white">Property Address</FormLabel>
                         <FormControl>
                           <Input placeholder="123 Main St, City, CA" className="min-h-[48px] bg-white/90 text-foreground border-white/30" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="notes" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-body text-white">
+                          Additional Info <span className="text-white/50 font-normal">(optional)</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Anything else we should know about your property or ADU goals..." className="min-h-[80px] bg-white/90 text-foreground border-white/30 resize-none" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

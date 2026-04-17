@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { submitForm } from "@/lib/submitForm";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
@@ -77,10 +78,7 @@ const ProbateGuide = () => {
 
   const onSubmit = async (_d: LeadWithOptionalPhoneValues) => {
     try {
-      const endpoint = import.meta.env.VITE_FORMSPREE_STRATEGY_ENDPOINT as string | undefined;
-      if (endpoint) {
-        await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(_d) });
-      }
+      await submitForm(_d, "Probate Guide Download");
       setSubmitted(true);
       toast.success("Your Inherited & Probate Property Guide is on the way!");
     } catch { toast.error("Something went wrong. Please try again."); }

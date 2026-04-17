@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { submitForm } from "@/lib/submitForm";
 import probateInventoryImg from "@/assets/probate-inventory-appraisal.png";
 import probateCourtImg from "@/assets/probate-court-hearing.png";
 import probatePetitionImg from "@/assets/probate-petition.png";
@@ -181,14 +182,7 @@ const Probate = () => {
 
   const onSubmit = async (data: ProbateFormValues) => {
     try {
-      const endpoint = import.meta.env.VITE_FORMSPREE_STRATEGY_ENDPOINT as string | undefined;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ ...data, formType: "probate-review" }),
-        });
-      }
+      await submitForm({ ...data, formType: "probate-review" }, "Probate Property Review");
       setSubmitted(true);
       toast.success("Thank you! We'll be in touch soon.");
     } catch {

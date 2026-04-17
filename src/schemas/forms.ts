@@ -8,11 +8,13 @@ const addressField = z.string().trim().min(1, "Property address is required").ma
 const phoneRequired = z.string().trim().min(1, "Phone number is required").max(PHONE_MAX);
 const phoneOptional = z.string().trim().max(PHONE_MAX).optional().or(z.literal(""));
 
-// ── Lead (3-field): AduFeasibility ──────────────────────────────────
+// ── Lead (5-field): AduFeasibility ──────────────────────────────────
 export const leadSchema = z.object({
   name: nameField,
   email: emailField,
+  phone: phoneRequired,
   address: addressField,
+  notes: z.string().trim().max(DESCRIPTION_MAX).optional().or(z.literal("")),
 });
 export type LeadValues = z.infer<typeof leadSchema>;
 

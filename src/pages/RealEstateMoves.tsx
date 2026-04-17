@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { submitForm } from "@/lib/submitForm";
 import { Helmet } from "react-helmet-async";
 import sellingAsIsImg from "@/assets/selling-as-is.jpg";
 import sellingPrepareImg from "@/assets/selling-prepare.jpg";
@@ -511,14 +512,7 @@ const RealEstateMoves = () => {
 
   const onPropertyReviewSubmit = async (data: ReviewFormValues) => {
     try {
-      const endpoint = import.meta.env.VITE_FORMSPREE_STRATEGY_ENDPOINT as string | undefined;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(data),
-        });
-      }
+      await submitForm(data, "Property Review — Real Estate Moves");
       setPropertyReviewSubmitted(true);
       toast.success("Property review request submitted!");
     } catch {

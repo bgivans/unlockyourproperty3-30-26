@@ -1,4 +1,5 @@
 import { useState, useId, useEffect, useCallback } from "react";
+import { submitForm } from "@/lib/submitForm";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Helmet } from "react-helmet-async";
@@ -757,14 +758,7 @@ const FixDevelop = () => {
 
   const onGuideSubmit = async (_data: GuideValues) => {
     try {
-      const endpoint = import.meta.env.VITE_FORMSPREE_STRATEGY_ENDPOINT as string | undefined;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(_data),
-        });
-      }
+      await submitForm(_data, "ADU Feasibility Assessment");
       setGuideSubmitted(true);
       toast.success("Your ADU guide is on the way!");
     } catch {
@@ -774,14 +768,7 @@ const FixDevelop = () => {
 
   const onPropertyReviewSubmit = async (data: PropertyReviewValues) => {
     try {
-      const endpoint = import.meta.env.VITE_FORMSPREE_STRATEGY_ENDPOINT as string | undefined;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(data),
-        });
-      }
+      await submitForm(data, "Code Violation Property Review");
       setPropertyReviewSubmitted(true);
       toast.success("Property review request submitted!");
     } catch {
