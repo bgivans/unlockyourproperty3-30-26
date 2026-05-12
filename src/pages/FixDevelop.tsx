@@ -743,7 +743,7 @@ const FixDevelop = () => {
 
   const guideForm = useForm<GuideValues>({
     resolver: zodResolver(leadSchema),
-    defaultValues: { name: "", email: "", address: "" },
+    defaultValues: { name: "", email: "", phone: "", address: "" },
   });
 
   const violationGuideForm = useForm<ViolationGuideValues>({
@@ -1201,6 +1201,19 @@ const FixDevelop = () => {
                             <FormLabel className="font-body text-white">Email</FormLabel>
                             <FormControl>
                               <Input type="email" placeholder="you@example.com" className="min-h-[48px] bg-white/90 text-foreground border-white/30" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={guideForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-body text-white">Phone</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="(555) 555-5555" className="min-h-[48px] bg-white/90 text-foreground border-white/30" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

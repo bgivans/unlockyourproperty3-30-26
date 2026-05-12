@@ -5,8 +5,11 @@ const GHL_WEBHOOKS = {
 } as const;
 
 function getWebhookUrl(data: Record<string, unknown>, formName: string): string {
-  if (formName === "ADU Feasibility Guide Download") return GHL_WEBHOOKS.adu;
-  if (formName === "Probate Property Review") return GHL_WEBHOOKS.probate;
+  // Route any ADU-related form to the ADU webhook. Match on name fragment so
+  // future form titles like "ADU Feasibility Assessment", "ADU Guide", etc.
+  // all land in the same pipeline without needing router updates.
+  if (formName.toLowerCase().includes("adu")) return GHL_WEBHOOKS.adu;
+  if (formName.toLowerCase().includes("probate")) return GHL_WEBHOOKS.probate;
 
   const situation = data.situation as string | undefined;
   if (situation === "adu-development") return GHL_WEBHOOKS.adu;
