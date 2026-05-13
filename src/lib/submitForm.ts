@@ -1,3 +1,5 @@
+import { trackEvent } from "./track-view";
+
 const GHL_WEBHOOKS = {
   adu: "https://services.leadconnectorhq.com/hooks/l9C6nPm57J1BlhJ0E4NU/webhook-trigger/50bd1d23-c7ba-4e0d-afde-70e2a2e8e603",
   probate: "https://services.leadconnectorhq.com/hooks/2jmjVmmtwFkdAqB4opPl/webhook-trigger/8ed80b41-524c-4fa1-a9ad-2f112b20dcc3",
@@ -42,4 +44,10 @@ export async function submitForm(
   });
 
   if (!res.ok) throw new Error(`GHL webhook failed: ${res.status}`);
+
+  try {
+    trackEvent({ eventType: "form_submit", formName });
+  } catch {
+    // analytics is fire-and-forget
+  }
 }
