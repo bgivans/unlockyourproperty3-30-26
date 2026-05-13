@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import ScrollToHash from "./components/ScrollToHash.tsx";
+import ViewTracker from "./components/ViewTracker.tsx";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
@@ -23,6 +24,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToHash />
+          <ViewTracker />
           <Routes>
             <Route path="/" element={<SiteLayout><Index /></SiteLayout>} />
             <Route path="/solutions/fix-develop" element={<SiteLayout><FixDevelop /></SiteLayout>} />
