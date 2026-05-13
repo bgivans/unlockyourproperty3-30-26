@@ -68,11 +68,13 @@ export default async function handler(req: Request): Promise<Response> {
   const visitorId = body.visitor_id;
   const isEvent = Boolean(body.event_type);
 
-  // Upsert visitor — ignore duplicates so first-touch attribution sticks.
-  // Anon role allows INSERT only; existing rows are left alone.
-  await sbRequest("/visitors?on_conflict=visitor_id", {
+  // Insert visitor on first touch. If the visitor already exists, the unique
+  // constraint on visitor_id returns 409 — we ignore it (existing first-touch
+  // data stays). PostgREST upsert via on_conflict would require anon SELECT
+  // permission which we don't grant for privacy, so plain INSERT it is.
+  await sbRequest("/visitors", {
     method: "POST",
-    prefer: "resolution=ignore-duplicates,return=minimal",
+    prefer: "return=minimal",
     body: JSON.stringify({
       visitor_id: visitorId,
       first_host: body.host,
